@@ -634,8 +634,9 @@
       </div>
       <div class="upload-section" id="exp-playlist-section">
         <div class="link-input-wrap">
-          <input type="text" id="yt-playlist-url" placeholder="Paste YouTube playlist link here...">
-          <button class="btn" onclick="addYtPlaylist()">Add Playlist ▶️</button>
+          <input type="text" id="yt-playlist-url" placeholder="ضع رابط قائمة التشغيل أو فيديو الشرح من يوتيوب هنا...">
+          <input type="text" id="yt-playlist-title" placeholder="اسم المادة/القائمة (اختياري)" style="flex:0 1 200px;">
+          <button class="btn" onclick="addYtPlaylist()">إضافة القائمة ▶️</button>
         </div>
       </div>
       <div class="cards" id="exp-list"></div>
@@ -1336,21 +1337,26 @@ function extractYtPlaylistId(url){
 
 function addYtPlaylist(){
   const url = $('yt-playlist-url').value.trim();
-  if(!url){ alert('Please paste a YouTube playlist link'); return; }
-  const playlistId = extractYtPlaylistId(url);
-  if(!playlistId){ alert('Could not find a valid playlist ID in this URL.\n\nMake sure the URL contains "list=..." parameter.'); return; }
-  // Check duplicate
-  if(ytPlaylists.some(p=>p.playlistId===playlistId)){ alert('This playlist is already added!'); return; }
-  const title = 'YouTube Playlist';
-  ytPlaylists.push({id:uid(), url, playlistId, title, date:Date.now()});
+  if(!url){ alert('من فضلك ضع رابط يوتيوب صحيح'); return; }
+  if(!url.includes('youtube.com') && !url.includes('youtu.be')){
+    alert('برجاء إدخال رابط يوتيوب صحيح (يحتوي على youtube.com أو youtu.be)'); return;
+  }
+  let title = $('yt-playlist-title') ? $('yt-playlist-title').value.trim() : '';
+  if(!title){
+    title = 'قائمة شرح يوتيوب 📺';
+  }
+  ytPlaylists.push({id:uid(), url, title, date:Date.now()});
   save('ytPlaylists', ytPlaylists);
+  syncStateToCloud('ytPlaylists', ytPlaylists);
   $('yt-playlist-url').value='';
+  if($('yt-playlist-title')) $('yt-playlist-title').value='';
   renderYtPlaylists();
 }
 
 function deleteYtPlaylist(id){
   ytPlaylists = ytPlaylists.filter(p=>p.id!==id);
   save('ytPlaylists', ytPlaylists);
+  syncStateToCloud('ytPlaylists', ytPlaylists);
   renderYtPlaylists();
 }
 
@@ -1358,15 +1364,17 @@ function renderYtPlaylists(){
   const el = $('yt-playlist-list');
   if(!ytPlaylists.length){ el.innerHTML=''; return; }
   el.innerHTML = ytPlaylists.map(p=>`
-    <div class="yt-playlist-card">
-      <div class="yt-iframe-wrap">
-        <iframe src="https://www.youtube.com/embed/videoseries?list=${esc(p.playlistId)}" 
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-          allowfullscreen loading="lazy"></iframe>
+    <div class="yt-playlist-card" style="padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; background:#FFFDF8; border:1px solid var(--line); border-radius:14px; margin-bottom:10px;">
+      <div style="display:flex; align-items:center; gap:12px; overflow:hidden;">
+        <span style="font-size:26px;">▶️</span>
+        <div style="overflow:hidden;">
+          <h4 style="margin:0 0 3px; font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--plum);">${esc(p.title)}</h4>
+          <a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" style="font-size:12.5px; color:var(--pink-deep); text-decoration:underline;">${esc(p.url)}</a>
+        </div>
       </div>
-      <div class="yt-card-info">
-        <h4 title="${esc(p.url)}">▶️ Playlist: ${esc(p.playlistId)}</h4>
-        <button class="del" onclick="deleteYtPlaylist('${p.id}')">Delete</button>
+      <div style="display:flex; align-items:center; gap:10px; flex:0 0 auto;">
+        <a class="btn" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" style="padding:8px 16px; font-size:13px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#FF0000; color:#fff;">▶️ فتح في يوتيوب</a>
+        <button class="del" onclick="deleteYtPlaylist('${p.id}')">حذف</button>
       </div>
     </div>`).join('');
 }
