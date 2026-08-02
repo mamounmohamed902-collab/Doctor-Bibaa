@@ -868,12 +868,14 @@ async function connectOwnerGoogleDrive(){
     if(result.credential && result.credential.accessToken){
       const token = result.credential.accessToken;
       // Get or Create Petal Planner Storage folder
-      const folderId = await createDriveFolder(token);
-      // Save to Firestore centralData/driveConfig
+      const folderId = (await createDriveFolder(token)) || null;
+      const ownerEmail = (result.user && result.user.email) ? result.user.email : '';
+      
+      // Save to Firestore centralData/driveConfig safely
       await firestoreDb.collection('centralData').doc('driveConfig').set({
         token: token,
         folderId: folderId,
-        ownerEmail: result.user.email,
+        ownerEmail: ownerEmail,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       ownerDriveToken = token;
@@ -905,7 +907,7 @@ async function createDriveFolder(token){
       body: JSON.stringify({ name: 'Petal Planner Storage', mimeType: 'application/vnd.google-apps.folder' })
     });
     const folderData = await createRes.json();
-    return folderData.id;
+    return (folderData && folderData.id) ? folderData.id : null;
   } catch(e){
     return null;
   }
