@@ -925,49 +925,38 @@ function listenOwnerDriveConfig(){
   });
 }
 
-/* ---- Upload Files (Prefers Owner Google Drive, Fallback to Firebase Storage) ---- */
+/* ---- Upload Files via Cloudinary (Central Cloud Storage) ---- */
+const CLOUDINARY_CLOUD = 'ynvizbmz';
+const CLOUDINARY_PRESET = 'ir5bzovy';
+
 async function uploadToDrive(file){
-  // 1. Try uploading to Owner's Central Google Drive
-  if(ownerDriveToken){
-    try {
-      const metadata = {
-        name: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        parents: ownerDriveFolderId ? [ownerDriveFolderId] : []
+  try {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('upload_preset', CLOUDINARY_PRESET);
+    form.append('resource_type', 'auto');
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`,
+      { method: 'POST', body: form }
+    );
+    const data = await res.json();
+
+    if(data.secure_url){
+      console.log('✅ Uploaded to Cloudinary:', data.secure_url);
+      return {
+        driveId: data.public_id,
+        driveUrl: data.secure_url,
+        webViewLink: data.secure_url
       };
-      const form = new FormData();
-      form.append('metadata', new Blob([JSON.stringify(metadata)], {type:'application/json'}));
-      form.append('file', file);
-
-      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,webContentLink', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${ownerDriveToken}` },
-        body: form
-      });
-      const data = await res.json();
-      if(data.id){
-        console.log("Uploaded directly to Owner Google Drive! File ID:", data.id);
-        const driveUrl = `https://drive.google.com/uc?export=view&id=${data.id}`;
-        return { driveId: data.id, driveUrl: driveUrl, webViewLink: data.webViewLink || driveUrl };
-      }
-    } catch(e){
-      console.warn("Owner Drive upload notice (falling back to Firebase Storage):", e);
+    } else {
+      console.warn('Cloudinary upload failed:', data);
+      return null;
     }
+  } catch(e){
+    console.warn('Cloudinary upload error:', e);
+    return null;
   }
-
-  // 2. Fallback to Central Firebase Storage (doctor-habiba.firebasestorage.app)
-  if(firebaseStorage){
-    try {
-      const fileRef = firebaseStorage.ref().child(`uploads/${Date.now()}_${file.name}`);
-      const snapshot = await fileRef.put(file);
-      const downloadUrl = await snapshot.ref.getDownloadURL();
-      console.log("Uploaded to Firebase Central Storage! URL:", downloadUrl);
-      return { driveId: snapshot.ref.name, driveUrl: downloadUrl, webViewLink: downloadUrl };
-    } catch(e){
-      console.warn("Firebase storage upload notice:", e);
-    }
-  }
-  return null;
 }
 
 /* ---- Central Cloud Realtime Sync (Firestore) ---- */
@@ -1084,37 +1073,69 @@ function deleteFolder(id, section){
 }
 
 function loadAllFiles(){
+  if(!db) return;
   const tx = db.transaction('files','readonly');
   const req = tx.objectStore('files').getAll();
   req.onsuccess = () => {
     filesBySection = {summaries:[], midterm:[], final:[], quizzes:[], explanation:[]};
     req.result.forEach(f => {
-      const url = URL.createObjectURL(f.blob);
+      let url = '';
+      if(f.blob) {
+        try { url = URL.createObjectURL(f.blob); } catch(e){}
+      }
+      if(!url && f.driveUrl) url = f.driveUrl;
       filesBySection[f.section]?.push({...f, url});
     });
     SECTIONS.forEach(renderFileSection);
   };
 }
-async function addFiles(section, fileList){
+
+function addFiles(section, fileList){
+  if(!db){
+    alert("جاري تجهيز قاعدة البيانات، يرجى إعادة المحاولة بعد ثواني قليلة.");
+    return;
+  }
   const folderId = activeFolder[section] || null;
   const filesArray = Array.from(fileList);
-  for(const f of filesArray){
-    const driveData = await uploadToDrive(f);
+
+  filesArray.forEach(f => {
+    const fileId = uid();
     const item = {
-      id: uid(),
+      id: fileId,
       section,
       folderId,
       name: f.name,
       type: f.type || 'application/octet-stream',
       size: f.size,
       blob: f,
-      driveUrl: driveData ? driveData.driveUrl : null,
+      driveUrl: null,
       date: Date.now()
     };
-    const tx = db.transaction('files','readwrite');
-    tx.objectStore('files').put(item);
-  }
-  loadAllFiles();
+
+    // 1. Save locally IMMEDIATELY
+    try {
+      const tx = db.transaction('files', 'readwrite');
+      tx.objectStore('files').put(item);
+      tx.oncomplete = loadAllFiles;
+    } catch(err){
+      console.warn("Immediate save error:", err);
+    }
+
+    // 2. Upload to Cloud in background asynchronously
+    uploadToDrive(f).then(driveData => {
+      if(driveData && driveData.driveUrl){
+        item.driveUrl = driveData.driveUrl;
+        item.driveId = driveData.driveId;
+        try {
+          const bgTx = db.transaction('files', 'readwrite');
+          bgTx.objectStore('files').put(item);
+          bgTx.oncomplete = loadAllFiles;
+        } catch(e){}
+      }
+    }).catch(err => console.warn("Background cloud upload notice:", err));
+  });
+  
+  setTimeout(loadAllFiles, 50);
 }
 function deleteFile(id){
   const tx = db.transaction('files','readwrite');
