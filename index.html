@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doctor Habiba | Study Space</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<style>
+  :root{
+    --cream:#FBF2E9;
+    --paper:#FFFDF8;
+    --pink:#F3B6C4;
+    --pink-deep:#E1839B;
+    --lavender:#CDB8E6;
+    --lavender-deep:#A98FD1;
+    --plum:#4A3350;
+    --ink:#8A7A8F;
+    --gold:#EFA96A;
+    --mint:#93D0BD;
+    --line:#EFE1D4;
+    --shadow: 0 12px 32px -14px rgba(74,51,80,0.22);
+    --ease: cubic-bezier(.25,.8,.35,1);
+    --ease-soft: cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html,body{
+    background:var(--cream);
+    font-family:'Plus Jakarta Sans',sans-serif;
+    color:var(--plum);
+    min-height:100vh;
+  }
+  body{
+    background-image:
+      radial-gradient(circle at 8% 12%, rgba(243,182,196,0.3), transparent 42%),
+      radial-gradient(circle at 92% 88%, rgba(205,184,230,0.3), transparent 42%);
+    padding-bottom:112px;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif; font-weight:600; letter-spacing:-0.01em;}
+  ::selection{background:var(--pink); color:#fff;}
+
+  /* ===== Header ===== */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:28px 5vw 8px; flex-wrap:wrap; gap:10px; position:relative; z-index:1;
+  }
+  .brand{display:flex; align-items:center; gap:14px;}
+  .brand .badge{
+    width:52px; height:52px; border-radius:16px;
+    background:linear-gradient(145deg, var(--pink), var(--lavender));
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px; box-shadow:var(--shadow);
+  }
+  .brand h1{font-size:29px; margin:0; color:var(--plum);}
+  .brand p{margin:3px 0 0; font-size:13px; color:var(--ink);}
+  .date-chip{
+    background:var(--paper); border:1px solid var(--line); border-radius:999px;
+    padding:8px 18px; font-size:13px; color:var(--ink); box-shadow:var(--shadow);
+  }
+  .header-actions{display:flex; align-items:center; gap:10px;}
+  .bg-btn{
+    all:unset; cursor:pointer; background:var(--paper); border:1px solid var(--line); border-radius:999px;
+    padding:8px 16px; font-size:13px; color:var(--ink); box-shadow:var(--shadow); font-weight:600;
+    transition:transform .18s var(--ease-soft);
+  }
+  .bg-btn:hover{transform:translateY(-2px);}
+
+  /* ===== Layout ===== */
+  .app{
+    display:flex; gap:22px; padding:12px 5vw 20px; align-items:flex-start; flex-wrap:wrap;
+    position:relative; z-index:1;
+  }
+
+  nav.tabs{
+    display:flex; flex-direction:column; gap:9px;
+    min-width:190px; position:sticky; top:18px; flex:0 0 auto;
+  }
+  nav.tabs button{
+    all:unset; cursor:pointer;
+    display:flex; align-items:center; gap:10px;
+    padding:13px 18px; border-radius:14px;
+    font-family:'Plus Jakarta Sans'; font-weight:700; font-size:14.5px;
+    color:#fff; box-shadow:0 6px 16px -10px rgba(74,51,80,0.35);
+    transition:transform .28s var(--ease), box-shadow .28s var(--ease), filter .2s;
+  }
+  nav.tabs button:hover{transform:translateX(-4px); filter:brightness(1.04);}
+  nav.tabs button.active{transform:translateX(-8px); box-shadow:0 10px 22px -10px rgba(74,51,80,0.5);}
+  nav.tabs button span.ic{font-size:17px;}
+  nav.tabs button[data-tab="summaries"]{background:var(--pink-deep);}
+  nav.tabs button[data-tab="midterm"]{background:var(--gold);}
+  nav.tabs button[data-tab="final"]{background:var(--lavender-deep);}
+  nav.tabs button[data-tab="quizzes"]{background:var(--mint); color:#2F4A42;}
+  nav.tabs button[data-tab="explanation"]{background:#D9A066;}
+  nav.tabs button[data-tab="todo"]{background:#E38C8C;}
+  nav.tabs button[data-tab="music"]{background:var(--plum);}
+  nav.tabs button[data-tab="calendar"]{background:linear-gradient(135deg,#E1839B,#8FC1E3);}
+  nav.tabs button[data-tab="burnout"]{background:linear-gradient(135deg,#A98FD1,#4A3350);}
+
+  main{flex:1 1 500px; min-width:280px; position:relative;}
+  .panel{
+    background:var(--paper); border-radius:22px; padding:26px 26px 30px;
+    box-shadow:var(--shadow); border:1px solid var(--line);
+  }
+  .panel.enter{animation:panelIn .38s var(--ease);}
+  @keyframes panelIn{
+    from{opacity:0; transform:translateY(10px) scale(.99);}
+    to{opacity:1; transform:translateY(0) scale(1);}
+  }
+  .panel h2{margin:0 0 4px; font-size:25px;}
+  .panel .sub{color:var(--ink); font-size:13px; margin:0 0 20px;}
+
+  /* summary stat row */
+  .stat-row{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap;}
+  .stat-row .pill{
+    background:#fffaf3; border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; font-size:12px; color:var(--ink); font-weight:600;
+  }
+
+  /* folders */
+  .folder-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;}
+  .folder-chip{
+    background:#fffaf3; border:1px solid var(--line); border-radius:999px; padding:6px 14px;
+    font-size:12.5px; color:var(--ink); cursor:pointer; font-weight:600;
+    display:flex; align-items:center; gap:7px;
+    transition:background .18s var(--ease-soft), color .18s var(--ease-soft), border-color .18s var(--ease-soft), transform .15s var(--ease-soft);
+  }
+  .folder-chip:hover{transform:translateY(-1px);}
+  .folder-chip.active{background:var(--pink-deep); color:#fff; border-color:var(--pink-deep);}
+  .folder-chip.add{border-style:dashed; color:var(--pink-deep); background:transparent;}
+  .folder-del{font-size:11px; opacity:.65; line-height:1;}
+  .folder-del:hover{opacity:1;}
+
+  /* dropzone */
+  .drop{
+    border:1.6px dashed var(--pink); border-radius:16px; padding:30px 20px; text-align:center;
+    color:var(--ink); margin-bottom:20px; cursor:pointer; font-size:13.5px;
+    transition:background .25s var(--ease-soft), border-color .25s var(--ease-soft), transform .2s var(--ease-soft);
+  }
+  .drop:hover{background:#FFF6F8; border-color:var(--pink-deep);}
+  .drop.drag{background:#FFF0F3; border-color:var(--pink-deep); transform:scale(1.01);}
+  .drop b{display:block; font-size:15px; color:var(--plum); margin-bottom:4px; font-weight:700;}
+
+  /* file cards */
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;}
+  .card{
+    background:#fffaf3; border:1px solid var(--line); border-radius:16px;
+    padding:16px; position:relative; box-shadow:0 6px 16px -12px rgba(0,0,0,0.15);
+    transition:transform .22s var(--ease-soft), box-shadow .22s var(--ease-soft), opacity .3s;
+  }
+  .card:hover{transform:translateY(-3px); box-shadow:0 14px 24px -14px rgba(74,51,80,0.28);}
+  .card.completed{opacity:.55; border-color:var(--mint);}
+  .card.completed .thumb{filter:grayscale(.3);}
+  .card .thumb{
+    width:100%; height:110px; border-radius:10px; overflow:hidden; margin-bottom:10px;
+    background:#f3e9df; display:flex; align-items:center; justify-content:center; font-size:34px;
+  }
+  .card .thumb img{width:100%; height:100%; object-fit:cover;}
+  .card h4{margin:0 0 4px; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .card .meta{font-size:11.5px; color:var(--ink); margin-bottom:12px;}
+  .card .actions{display:flex; justify-content:space-between; align-items:center; gap:6px;}
+  .card .done-chk{
+    all:unset; cursor:pointer; width:26px; height:26px; border-radius:8px;
+    border:2px solid var(--mint); display:flex; align-items:center; justify-content:center;
+    font-size:14px; flex:0 0 auto;
+    transition:background .2s var(--ease-soft), transform .15s var(--ease-soft), border-color .15s;
+  }
+  .card .done-chk:hover{transform:scale(1.12); border-color:#6ABF8B;}
+  .card .done-chk:active{transform:scale(.88);}
+  .card .done-chk.checked{background:var(--mint); border-color:var(--mint); color:#fff;}
+  .card .open{
+    all:unset; cursor:pointer; font-size:12px; font-weight:700; color:var(--pink-deep);
+    padding:5px 10px; border-radius:8px; transition:background .18s var(--ease-soft);
+  }
+  .card .open:hover{background:#FBDCE4;}
+  .card .del{cursor:pointer; color:#C56767; font-size:12px; background:none; border:none; font-family:inherit; transition:opacity .18s;}
+  .card .del:hover{opacity:.7;}
+  .empty{color:var(--ink); font-size:14px; text-align:center; padding:44px 0; opacity:.7;}
+
+  /* song completion */
+  .song-row .song-chk{
+    width:24px; height:24px; border-radius:8px; border:2px solid var(--mint); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; flex:0 0 auto; font-size:13px;
+    background:transparent; color:transparent; font-family:inherit;
+    transition:background .2s var(--ease-soft), transform .15s var(--ease-soft);
+  }
+  .song-row .song-chk:hover{transform:scale(1.12);}
+  .song-row .song-chk:active{transform:scale(.88);}
+  .song-row .song-chk.checked{background:var(--mint); border-color:var(--mint); color:#fff;}
+  .song-row.song-done{opacity:.5;}
+  .song-row.song-done .n{text-decoration:line-through;}
+
+  /* Pepsi cat toast */
+  .pepsi-toast{
+    position:fixed; top:50%; left:50%; z-index:300;
+    transform:translate(-50%,-50%);
+    display:flex; flex-direction:column; align-items:center; gap:0;
+    animation:pepsiIn .5s var(--ease) forwards;
+    pointer-events:none;
+  }
+  .pepsi-toast.hiding{animation:pepsiOut .4s var(--ease) forwards;}
+  @keyframes pepsiIn{
+    from{opacity:0; transform:translate(-50%,-50%) translateY(30px) scale(.85);}
+    to{opacity:1; transform:translate(-50%,-50%) translateY(0) scale(1);}
+  }
+  @keyframes pepsiOut{
+    from{opacity:1; transform:translate(-50%,-50%) translateY(0) scale(1);}
+    to{opacity:0; transform:translate(-50%,-50%) translateY(20px) scale(.9);}
+  }
+  .pepsi-img{
+    width:140px; height:140px; border-radius:50%; object-fit:cover;
+    border:3px solid var(--pink); box-shadow:0 6px 20px -6px rgba(74,51,80,0.4);
+    flex:0 0 auto; z-index:2; margin-bottom:-14px;
+    animation:pepsiWiggle 1.8s ease-in-out infinite;
+  }
+  @keyframes pepsiWiggle{
+    0%,100%{transform:rotate(0deg);}
+    25%{transform:rotate(-5deg);}
+    75%{transform:rotate(5deg);}
+  }
+  .pepsi-bubble{
+    background:var(--paper); border:1.5px solid var(--pink);
+    border-radius:18px; padding:18px 22px 16px;
+    max-width:320px; box-shadow:0 10px 28px -10px rgba(74,51,80,0.35);
+    font-size:15px; color:var(--plum); line-height:1.6;
+    font-weight:600; position:relative; text-align:center;
+  }
+  .pepsi-bubble .pepsi-name{
+    display:block; font-size:12px; color:var(--pink-deep); font-weight:800;
+    margin-bottom:6px; letter-spacing:.3px;
+  }
+  .pepsi-bubble .pepsi-close{
+    position:absolute; top:6px; right:8px; cursor:pointer; pointer-events:auto;
+    background:none; border:none; font-size:12px; color:var(--ink); opacity:.6;
+    transition:opacity .15s;
+  }
+  .pepsi-bubble .pepsi-close:hover{opacity:1;}
+
+  /* quiz list */
+  .quiz-item{
+    display:flex; align-items:center; gap:12px; background:#fffaf3; border:1px solid var(--line);
+    border-radius:14px; padding:12px 16px; margin-bottom:10px;
+    transition:transform .2s var(--ease-soft), opacity .25s var(--ease-soft);
+  }
+  .quiz-item:hover{transform:translateY(-2px);}
+  .quiz-item.done{opacity:.55;}
+  .quiz-item .chk{
+    width:26px; height:26px; border-radius:8px; border:2px solid var(--mint); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; flex:0 0 auto; font-size:14px;
+    transition:background .2s var(--ease-soft), transform .15s var(--ease-soft);
+  }
+  .quiz-item .chk:active{transform:scale(.85);}
+  .quiz-item.done .chk{background:var(--mint);}
+  .quiz-item .info{flex:1;}
+  .quiz-item .info h4{margin:0; font-size:15px; font-weight:700;}
+  .quiz-item .info small{color:var(--ink);}
+  .quiz-item .score{font-size:12px; color:var(--gold); font-weight:700;}
+
+  /* todo */
+  .todo-item{
+    display:flex; align-items:center; gap:12px; background:#fffaf3; border:1px solid var(--line);
+    border-radius:14px; padding:12px 16px; margin-bottom:10px;
+    transition:transform .2s var(--ease-soft);
+  }
+  .todo-item:hover{transform:translateY(-2px);}
+  .todo-item.done .txt{text-decoration:line-through; color:var(--ink);}
+  .todo-item .chk{
+    width:24px; height:24px; border-radius:50%; border:2px solid var(--pink-deep); cursor:pointer;
+    flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:13px;
+    transition:background .2s var(--ease-soft), transform .15s var(--ease-soft);
+  }
+  .todo-item .chk:active{transform:scale(.85);}
+  .todo-item.done .chk{background:var(--pink-deep); color:#fff;}
+  .todo-item .txt{flex:1; font-size:14px;}
+  .prio{font-size:11px; padding:3px 9px; border-radius:999px; font-weight:700;}
+  .prio.high{background:#FADADA; color:#C0392B;}
+  .prio.med{background:#FDEBC8; color:#B5750A;}
+  .prio.low{background:#DDF3E8; color:#28794F;}
+
+  /* forms */
+  .add-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;}
+  .add-row input, .add-row select{
+    font-family:'Plus Jakarta Sans'; border:1px solid var(--line); background:#fffaf5;
+    border-radius:12px; padding:10px 14px; font-size:13.5px; color:var(--plum);
+    transition:border-color .2s var(--ease-soft);
+  }
+  .add-row input:focus, .add-row select:focus{outline:none; border-color:var(--pink-deep);}
+  .add-row input[type=text]{flex:1 1 200px;}
+  .btn{
+    all:unset; cursor:pointer; padding:10px 20px; border-radius:12px;
+    background:var(--plum); color:#fff; font-weight:700; font-size:13.5px;
+    box-shadow:0 6px 14px -6px rgba(74,51,80,0.5);
+    transition:transform .18s var(--ease-soft), box-shadow .18s var(--ease-soft);
+  }
+  .btn:hover{transform:translateY(-2px); box-shadow:0 10px 18px -6px rgba(74,51,80,0.55);}
+  .btn:active{transform:translateY(0);}
+  .btn.secondary{
+    background:transparent; color:var(--plum); border:1.5px solid var(--line);
+    box-shadow:none; font-weight:600;
+  }
+  .btn.secondary:hover{background:#FFF6F8; border-color:var(--pink-deep);}
+
+  /* link input */
+  .link-input-wrap{
+    display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center;
+  }
+  .link-input-wrap input[type=text]{
+    flex:1 1 250px; font-family:'Plus Jakarta Sans'; border:1px solid var(--line); background:#fffaf5;
+    border-radius:12px; padding:10px 14px; font-size:13.5px; color:var(--plum);
+    transition:border-color .2s var(--ease-soft);
+  }
+  .link-input-wrap input[type=text]:focus{outline:none; border-color:var(--pink-deep);}
+  .link-input-wrap input[type=text]::placeholder{color:var(--ink); opacity:.6;}
+  .upload-toggle{
+    display:flex; gap:0; margin-bottom:16px; border-radius:12px; overflow:hidden;
+    border:1px solid var(--line); width:fit-content;
+  }
+  .upload-toggle button{
+    all:unset; cursor:pointer; padding:9px 18px; font-size:13px; font-weight:700;
+    font-family:'Plus Jakarta Sans'; color:var(--ink);
+    background:#fffaf3; transition:all .2s var(--ease-soft);
+  }
+  .upload-toggle button:hover{background:#FFF0F3;}
+  .upload-toggle button.active{background:var(--plum); color:#fff;}
+  .upload-section{display:none;}
+  .upload-section.active{display:block;}
+
+  /* YouTube playlist */
+  .yt-playlist-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; margin-top:14px;}
+  .yt-playlist-card{
+    background:#fffaf3; border:1px solid var(--line); border-radius:16px;
+    overflow:hidden; box-shadow:0 6px 16px -12px rgba(0,0,0,0.15);
+    transition:transform .22s var(--ease-soft), box-shadow .22s var(--ease-soft);
+  }
+  .yt-playlist-card:hover{transform:translateY(-3px); box-shadow:0 14px 24px -14px rgba(74,51,80,0.28);}
+  .yt-playlist-card .yt-iframe-wrap{
+    position:relative; width:100%; padding-top:56.25%; background:#1a1a2e;
+  }
+  .yt-playlist-card .yt-iframe-wrap iframe{
+    position:absolute; top:0; left:0; width:100%; height:100%; border:0;
+  }
+  .yt-playlist-card .yt-card-info{
+    padding:12px 14px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .yt-playlist-card .yt-card-info h4{margin:0; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;}
+  .yt-playlist-card .yt-card-info .del{cursor:pointer; color:#C56767; font-size:12px; background:none; border:none; font-family:inherit; transition:opacity .18s;}
+  .yt-playlist-card .yt-card-info .del:hover{opacity:.7;}
+
+  /* music */
+  .song-row{
+    display:flex; align-items:center; gap:12px; background:#fffaf3; border:1px solid var(--line);
+    border-radius:14px; padding:10px 14px; margin-bottom:8px; cursor:pointer;
+    transition:background .2s var(--ease-soft), border-color .2s var(--ease-soft);
+  }
+  .song-row:hover{background:#FFF6F8;}
+  .song-row.playing{border-color:var(--pink-deep); background:#FFF0F3;}
+  .song-row .n{flex:1; font-size:14px;}
+
+  .player-bar{
+    position:fixed; bottom:0; left:0; right:0; background:var(--plum); color:#fff;
+    padding:12px 5vw; display:flex; align-items:center; gap:16px;
+    box-shadow:0 -10px 26px rgba(0,0,0,0.18); z-index:50;
+  }
+  .player-bar .vinyl{
+    width:40px; height:40px; border-radius:50%;
+    background:radial-gradient(circle, #222 0 6px, var(--gold) 7px 8px, #222 9px 40px);
+    flex:0 0 auto;
+  }
+  .player-bar .vinyl.spin{animation:spin 3s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .player-bar .info{flex:0 0 160px; overflow:hidden;}
+  .player-bar .info .t{font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .player-bar .info .s{font-size:11px; opacity:.7;}
+  .player-bar .controls{display:flex; align-items:center; gap:10px;}
+  .player-bar .controls button{
+    all:unset; cursor:pointer; width:34px; height:34px; border-radius:50%;
+    background:rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center;
+    font-size:14px; transition:background .18s var(--ease-soft), transform .15s var(--ease-soft);
+  }
+  .player-bar .controls button:hover{background:rgba(255,255,255,0.2);}
+  .player-bar .controls button:active{transform:scale(.9);}
+  .player-bar .controls button.play{background:var(--pink-deep); width:40px; height:40px; font-size:16px;}
+  .player-bar .progress{flex:1; display:flex; align-items:center; gap:8px; font-size:11px; opacity:.85;}
+  .player-bar input[type=range]{flex:1; accent-color:var(--pink-deep);}
+
+  /* ===== Calendar ===== */
+  .legend{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px;}
+  .legend .lg{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink); background:#fffaf3; border:1px solid var(--line); padding:5px 12px; border-radius:999px;}
+  .legend .dot{width:11px; height:11px; border-radius:4px; flex:0 0 auto;}
+  .month-card{margin-bottom:30px;}
+  .month-card h3{font-size:18px; margin:0 0 12px;}
+  .week-head{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px;}
+  .week-head span{text-align:center; font-size:11px; color:var(--ink); font-weight:700;}
+  .month-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  .day-cell{
+    aspect-ratio:1; border-radius:10px; background:#fffaf3; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--plum);
+    cursor:pointer; position:relative; overflow:hidden;
+    transition:transform .18s var(--ease-soft), box-shadow .18s var(--ease-soft);
+  }
+  .day-cell:hover{transform:scale(1.06); z-index:2; box-shadow:0 6px 14px -6px rgba(74,51,80,0.3);}
+  .day-cell.today{box-shadow:0 0 0 2px var(--pink-deep) inset;}
+  .day-cell.empty{visibility:hidden; cursor:default;}
+  .day-cell.colored{color:#fff; font-weight:700;}
+  .day-cell .fill{
+    position:absolute; inset:0; background:var(--clr,transparent); border-radius:50%;
+    clip-path:circle(0% at 50% 50%); z-index:0;
+  }
+  .day-cell .num{position:relative; z-index:1;}
+  .day-cell.animating .fill{animation:inkSpread .5s var(--ease) forwards;}
+  @keyframes inkSpread{ to{clip-path:circle(75% at 50% 50%); border-radius:10px;} }
+  .day-cell.popIn{animation:cellPop .38s var(--ease-soft);}
+  @keyframes cellPop{ 0%{transform:scale(1);} 45%{transform:scale(1.12);} 100%{transform:scale(1);} }
+
+  .color-popup{
+    position:fixed; z-index:150; background:var(--paper); border:1px solid var(--line); border-radius:16px;
+    padding:12px; box-shadow:var(--shadow); display:flex; gap:9px; flex-wrap:wrap; max-width:230px;
+    transform-origin:top center; animation:popIn .18s var(--ease-soft);
+  }
+  @keyframes popIn{ from{opacity:0; transform:scale(.92) translateY(-4px);} to{opacity:1; transform:scale(1) translateY(0);} }
+  .color-popup .sw{
+    width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px solid #fff;
+    box-shadow:0 2px 6px rgba(0,0,0,0.2); transition:transform .16s var(--ease-soft);
+  }
+  .color-popup .sw:hover{transform:scale(1.2);}
+  .color-popup .clear{
+    width:28px; height:28px; border-radius:50%; cursor:pointer; border:2px dashed var(--ink);
+    display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--ink); background:#fff;
+    transition:transform .16s var(--ease-soft);
+  }
+  .color-popup .clear:hover{transform:scale(1.1);}
+
+  /* ===== Burnout board ===== */
+  .burnout-toolbar{display:flex; gap:10px; margin-bottom:16px;}
+  .btn.danger{background:#C56767; box-shadow:0 6px 14px -6px rgba(197,103,103,0.5);}
+  .canvas-wrap{
+    position:relative; width:100%; height:600px; overflow:auto;
+    border:1px solid var(--line); border-radius:16px; background:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(74,51,80,0.04) 28px),
+      repeating-linear-gradient(90deg, transparent, transparent 27px, rgba(74,51,80,0.04) 28px), #FFFCF7;
+  }
+  .canvas-inner{position:relative; width:1800px; height:1300px;}
+  svg.conn-layer{position:absolute; top:0; left:0; width:1800px; height:1300px; pointer-events:none;}
+  svg.conn-layer line{pointer-events:stroke; cursor:pointer; transition:opacity .15s;}
+  svg.conn-layer line:hover{opacity:.9 !important;}
+  .think-box{
+    position:absolute; border-radius:14px; display:flex; flex-direction:column;
+    overflow:hidden; border:1px solid rgba(0,0,0,0.07);
+    box-shadow:0 8px 20px -12px rgba(74,51,80,0.35);
+    transition:box-shadow .2s var(--ease-soft);
+  }
+  .think-box.dragging{box-shadow:0 18px 34px -12px rgba(74,51,80,0.45); z-index:30;}
+  .box-head{
+    height:26px; flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+    padding:0 6px; cursor:grab; background:rgba(0,0,0,0.08); user-select:none;
+  }
+  .box-head:active{cursor:grabbing;}
+  .color-dots{display:flex; gap:4px;}
+  .color-dots span{width:11px; height:11px; border-radius:50%; cursor:pointer; border:1.5px solid rgba(255,255,255,0.8); transition:transform .15s;}
+  .color-dots span:hover{transform:scale(1.25);}
+  .box-del{all:unset; cursor:pointer; font-size:14px; line-height:1; color:rgba(0,0,0,0.45); padding:0 3px;}
+  .box-del:hover{color:#C0392B;}
+  .box-body{
+    flex:1; padding:8px 10px; font-size:13px; outline:none; overflow:auto;
+    line-height:1.45; color:var(--plum); cursor:text;
+  }
+  .resize-handle{
+    position:absolute; right:0; bottom:0; width:15px; height:15px; cursor:nwse-resize;
+    background:linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.28) 50%); border-radius:0 0 14px 0;
+  }
+  .connector{
+    position:absolute; width:11px; height:11px; border-radius:50%; background:var(--plum);
+    opacity:0; transition:opacity .15s, transform .15s; cursor:crosshair; z-index:5;
+  }
+  .think-box:hover .connector{opacity:.5;}
+  .connector:hover{opacity:1 !important; transform:scale(1.35);}
+  .connector.top{top:-5px; left:50%; margin-left:-5px;}
+  .connector.bottom{bottom:-5px; left:50%; margin-left:-5px;}
+  .connector.left{left:-5px; top:50%; margin-top:-5px;}
+  .connector.right{right:-5px; top:50%; margin-top:-5px;}
+  .canvas-hint{font-size:12px; color:var(--ink); margin-bottom:14px;}
+
+  /* ===== Background photo layer ===== */
+  .bg-photo-layer{position:fixed; inset:0; overflow:hidden; z-index:0; pointer-events:none;}
+  .bg-photo{
+    position:absolute; border-radius:14px; object-fit:cover; opacity:.42;
+    filter:saturate(.9); box-shadow:0 8px 20px -12px rgba(74,51,80,.3);
+    animation:floatXY var(--dur,12s) ease-in-out infinite;
+    animation-delay:var(--delay,0s);
+  }
+  @keyframes floatXY{
+    0%,100%{ transform:translate(0,0) rotate(var(--rot,0deg)); }
+    25%{ transform:translate(calc(var(--dx,16px)*0.5), calc(var(--dy,-16px)*0.3)) rotate(calc(var(--rot,0deg) + 2deg)); }
+    50%{ transform:translate(var(--dx,16px), var(--dy,-16px)) rotate(calc(var(--rot,0deg) + 4deg)); }
+    75%{ transform:translate(calc(var(--dx,16px)*0.3), calc(var(--dy,-16px)*0.6)) rotate(calc(var(--rot,0deg) + 2deg)); }
+  }
+
+  /* ===== Background photo modal ===== */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(74,51,80,0.35); z-index:200;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-box{
+    background:var(--paper); border-radius:20px; padding:26px; max-width:480px; width:100%;
+    max-height:80vh; overflow:auto; box-shadow:var(--shadow); position:relative;
+    animation:popIn .2s var(--ease-soft);
+  }
+  .modal-box h3{margin:0 0 4px; font-size:22px;}
+  .modal-close{
+    all:unset; cursor:pointer; position:absolute; top:20px; right:22px; font-size:16px; color:var(--ink);
+    transition:transform .15s var(--ease-soft);
+  }
+  .modal-close:hover{transform:scale(1.15);}
+  .bg-thumbs{display:grid; grid-template-columns:repeat(auto-fill,minmax(70px,1fr)); gap:8px; margin-top:16px;}
+  .bg-thumb{position:relative; border-radius:10px; overflow:hidden; aspect-ratio:1;}
+  .bg-thumb img{width:100%; height:100%; object-fit:cover;}
+  .bg-thumb button{
+    all:unset; cursor:pointer; position:absolute; top:3px; right:3px; background:rgba(0,0,0,.5);
+    color:#fff; width:18px; height:18px; border-radius:50%; font-size:10px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  @media(max-width:760px){
+    nav.tabs{flex-direction:row; overflow-x:auto; width:100%; position:static; padding-bottom:6px;}
+    nav.tabs button{white-space:nowrap;}
+    nav.tabs button.active{transform:translateY(-2px);}
+    .player-bar .info{flex:0 0 90px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="badge">📖</div>
+    <div>
+      <h1>Doctor Habiba </h1>
+      <p>your cozy corner for studying 🌸</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="bg-btn" id="cloudBtn" onclick="openCloudModal()">☁️ Cloud Sync</button>
+    <button class="bg-btn" onclick="openBgModal()">🖼️ Background</button>
+    <div class="date-chip" id="todayChip"></div>
+  </div>
+</header>
+
+<div class="app">
+  <nav class="tabs">
+    <button data-tab="summaries" class="active"><span class="ic">📝</span> Summaries</button>
+    <button data-tab="midterm"><span class="ic">📘</span> Midterm</button>
+    <button data-tab="final"><span class="ic">📗</span> Final</button>
+    <button data-tab="quizzes"><span class="ic">✅</span> Quizzes</button>
+    <button data-tab="explanation"><span class="ic">🎧</span> Explanation</button>
+    <button data-tab="todo"><span class="ic">🗒️</span> To-Do List</button>
+    <button data-tab="music"><span class="ic">🎵</span> Music</button>
+    <button data-tab="calendar"><span class="ic">📅</span> Calendar</button>
+    <button data-tab="burnout"><span class="ic">🧠</span> Burnout</button>
+  </nav>
+
+  <main id="main">
+    <!-- SUMMARIES -->
+    <section class="panel enter" id="panel-summaries">
+      <h2>Summaries ✨</h2>
+      <p class="sub">Upload your notes and summary files for each subject</p>
+      <div class="folder-row" id="sum-folders"></div>
+      <div class="stat-row" id="sum-stats"></div>
+      <div class="drop" id="sum-drop" onclick="document.getElementById('sum-input').click()">
+        <b>Drop files here</b> or click to upload
+      </div>
+      <input type="file" id="sum-input" multiple style="display:none">
+      <div class="cards" id="sum-list"></div>
+    </section>
+
+    <!-- MIDTERM -->
+    <section class="panel" id="panel-midterm" style="display:none">
+      <h2>Midterm 📘</h2>
+      <p class="sub">Keep all your midterm material in one place</p>
+      <div class="folder-row" id="mid-folders"></div>
+      <div class="stat-row" id="mid-stats"></div>
+      <div class="drop" id="mid-drop" onclick="document.getElementById('mid-input').click()">
+        <b>Drop files here</b> or click to upload
+      </div>
+      <input type="file" id="mid-input" multiple style="display:none">
+      <div class="cards" id="mid-list"></div>
+    </section>
+
+    <!-- FINAL -->
+    <section class="panel" id="panel-final" style="display:none">
+      <h2>Final 📗</h2>
+      <p class="sub">The last stretch — keep it organized</p>
+      <div class="folder-row" id="fin-folders"></div>
+      <div class="stat-row" id="fin-stats"></div>
+      <div class="drop" id="fin-drop" onclick="document.getElementById('fin-input').click()">
+        <b>Drop files here</b> or click to upload
+      </div>
+      <input type="file" id="fin-input" multiple style="display:none">
+      <div class="cards" id="fin-list"></div>
+    </section>
+
+    <!-- QUIZZES -->
+    <section class="panel" id="panel-quizzes" style="display:none">
+      <h2>Quizzes ✅</h2>
+      <p class="sub">Upload quiz sheets, practice files, or anything quiz-related</p>
+      <div class="folder-row" id="qz-folders"></div>
+      <div class="stat-row" id="qz-stats"></div>
+      <div class="drop" id="qz-drop" onclick="document.getElementById('qz-input').click()">
+        <b>Drop files here</b> or click to upload
+      </div>
+      <input type="file" id="qz-input" multiple style="display:none">
+      <div class="cards" id="qz-list"></div>
+    </section>
+
+    <!-- EXPLANATION -->
+    <section class="panel" id="panel-explanation" style="display:none">
+      <h2>Explanation 🎧</h2>
+      <p class="sub">Upload lecture explanations, recordings, or add a YouTube playlist</p>
+      <div class="folder-row" id="exp-folders"></div>
+      <div class="stat-row" id="exp-stats"></div>
+      <div class="upload-toggle" id="exp-toggle">
+        <button class="active" onclick="switchExpMode('file')">📁 Upload Files</button>
+        <button onclick="switchExpMode('playlist')">▶️ YouTube Playlist</button>
+      </div>
+      <div class="upload-section active" id="exp-file-section">
+        <div class="drop" id="exp-drop" onclick="document.getElementById('exp-input').click()">
+          <b>Drop files here</b> or click to upload
+        </div>
+        <input type="file" id="exp-input" multiple style="display:none">
+      </div>
+      <div class="upload-section" id="exp-playlist-section">
+        <div class="link-input-wrap">
+          <input type="text" id="yt-playlist-url" placeholder="ضع رابط قائمة التشغيل أو فيديو الشرح من يوتيوب هنا...">
+          <input type="text" id="yt-playlist-title" placeholder="اسم المادة/القائمة (اختياري)" style="flex:0 1 200px;">
+          <button class="btn" onclick="addYtPlaylist()">إضافة القائمة ▶️</button>
+        </div>
+      </div>
+      <div class="cards" id="exp-list"></div>
+      <div class="yt-playlist-grid" id="yt-playlist-list"></div>
+    </section>
+
+    <!-- TODO -->
+    <section class="panel" id="panel-todo" style="display:none">
+      <h2>To-Do List 🗒️</h2>
+      <p class="sub">Your daily tasks, one step at a time</p>
+      <div class="add-row">
+        <input type="text" id="td-text" placeholder="Write a task">
+        <select id="td-prio">
+          <option value="high">High priority</option>
+          <option value="med" selected>Medium priority</option>
+          <option value="low">Low priority</option>
+        </select>
+        <input type="date" id="td-date">
+        <button class="btn" onclick="addTodo()">Add</button>
+      </div>
+      <div id="td-list"></div>
+    </section>
+
+    <!-- MUSIC -->
+    <section class="panel" id="panel-music" style="display:none">
+      <h2>Music 🎵</h2>
+      <p class="sub">Upload your favorite songs or add them via link</p>
+      <div class="upload-toggle" id="music-toggle">
+        <button class="active" onclick="switchMusicMode('file')">📁 Upload Files</button>
+        <button onclick="switchMusicMode('link')">🔗 Add via Link</button>
+      </div>
+      <div class="upload-section active" id="music-file-section">
+        <div class="drop" onclick="document.getElementById('audioInput').click()">
+          <b>Drop audio here</b> or click to upload (mp3, wav...)
+        </div>
+        <input type="file" id="audioInput" accept="audio/*" multiple style="display:none">
+      </div>
+      <div class="upload-section" id="music-link-section">
+        <div class="link-input-wrap">
+          <input type="text" id="song-url" placeholder="Paste audio/song URL here...">
+          <input type="text" id="song-name" placeholder="Song name (optional)" style="flex:0 1 180px;">
+          <button class="btn" onclick="addSongByUrl()">Add Song 🎵</button>
+        </div>
+      </div>
+      <div id="song-list"></div>
+    </section>
+
+    <!-- CALENDAR -->
+    <section class="panel" id="panel-calendar" style="display:none">
+      <h2>My Calendar 🎨</h2>
+      <p class="sub">Tap any day and color it — right through the end of the year</p>
+      <div class="legend" id="legend"></div>
+      <div id="calendarWrap"></div>
+    </section>
+
+    <!-- BURNOUT -->
+    <section class="panel" id="panel-burnout" style="display:none">
+      <h2>Burnout 🧠</h2>
+      <p class="sub">Dump every thought into a box. Drag it, resize it, connect it to what it relates to.</p>
+      <div class="burnout-toolbar">
+        <button class="btn" onclick="addBox()">+ New box</button>
+        <button class="btn danger" onclick="clearBurnout()">Clear board</button>
+      </div>
+      <p class="canvas-hint">Drag from the small dot on a box's edge onto another box to connect them. Click a connection line to remove it.</p>
+      <div class="canvas-wrap" id="canvasWrap">
+        <div class="canvas-inner" id="canvasInner">
+          <svg id="connLayer" class="conn-layer"></svg>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Floating player -->
+<div class="player-bar">
+  <div class="vinyl" id="vinyl"></div>
+  <div class="info">
+    <div class="t" id="nowTitle">Nothing playing</div>
+    <div class="s" id="nowSub">Upload a song in the Music tab</div>
+  </div>
+  <div class="controls">
+    <button onclick="prevSong()">⏮</button>
+    <button class="play" id="playBtn" onclick="togglePlay()">▶</button>
+    <button onclick="nextSong()">⏭</button>
+  </div>
+  <div class="progress">
+    <span id="curT">0:00</span>
+    <input type="range" id="seek" min="0" max="100" value="0">
+    <span id="durT">0:00</span>
+  </div>
+</div>
+
+<audio id="audioEl"></audio>
+
+<!-- Background photos modal -->
+<div class="modal-overlay" id="bgModal" style="display:none" onclick="if(event.target===this) closeBgModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeBgModal()">✕</button>
+    <h3>Background Photos 🖼️</h3>
+    <p class="sub" style="margin:4px 0 0">Upload photos to scatter softly around the site's background</p>
+    <div class="drop" id="bg-drop" style="margin-top:16px" onclick="document.getElementById('bg-input').click()">
+      <b>Drop photos here</b> or click to upload
+    </div>
+    <input type="file" id="bg-input" accept="image/*" multiple style="display:none">
+    <div class="bg-thumbs" id="bg-pending"></div>
+    <button class="btn" id="bg-upload-btn" style="display:none; margin-top:12px" onclick="confirmBgUpload()">Upload</button>
+    <h4 style="margin:20px 0 4px; font-size:12.5px; color:var(--ink); font-weight:700;">Already in your background</h4>
+    <div class="bg-thumbs" id="bg-thumbs"></div>
+  </div>
+</div>
+
+<!-- Cloud Sync Modal -->
+<div class="modal-overlay" id="cloudModal" style="display:none" onclick="if(event.target===this) closeCloudModal()">
+  <div class="modal-box" style="max-width:500px">
+    <button class="modal-close" onclick="closeCloudModal()">✕</button>
+
+    <div style="text-align:center; margin-bottom:16px;">
+      <span style="font-size:44px;">☁️</span>
+      <h3 style="margin:8px 0 4px; font-size:23px;">إعدادات الكلاود</h3>
+      <p class="sub" style="margin:0">الملفات بترفع على Cloudinary وبتتزامن على كل الأجهزة تلقائياً!</p>
+    </div>
+
+    <div style="background:#FFF6F8; border:1px solid var(--line); border-radius:14px; padding:16px; margin:16px 0; text-align:right; font-size:13px; color:var(--plum);">
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <span>🌐 قاعدة البيانات (Firestore):</span>
+        <b style="color:var(--mint);">متصل تلقائياً 🟢</b>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <span>☁️ سيرفر التخزين (Cloudinary):</span>
+        <b style="color:var(--mint);">شغال 25GB مجاناً 🟢</b>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <span>📱 رفع الملفات:</span>
+        <b style="color:var(--plum);">تلقائي بدون تسجيل ⚡</b>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span>🔄 مزامنة بين الأجهزة:</span>
+        <b style="color:var(--mint);">فعّالة على كل الأجهزة 🟢</b>
+      </div>
+    </div>
+
+    <div style="background:#F0FFF4; border:1px solid #B2DFDB; border-radius:12px; padding:14px; text-align:right; font-size:12.5px; color:#2E7D32; margin-bottom:14px;">
+      ✅ الملفات اللي بترفعيها بتتحفظ على Cloudinary وبتظهر على أي جهاز أو موبايل يفتح الموقع فوراً!
+    </div>
+
+    <button class="btn secondary" style="width:100%; text-align:center;" onclick="closeCloudModal()">إغلاق</button>
+  </div>
+</div>
+
+<script>
+/* ============ helpers ============ */
+const $ = id => document.getElementById(id);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const load = (k, def) => JSON.parse(localStorage.getItem(k) || JSON.stringify(def));
+const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+const esc = s => { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; };
+const fmtSize = b => b < 1024 ? b+' B' : b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB';
+const fileIcon = type => {
+  if(type.startsWith('image/')) return '🖼️';
+  if(type === 'application/pdf') return '📕';
+  if(type.includes('word')) return '📘';
+  if(type.includes('presentation')) return '📙';
+  if(type.includes('sheet') || type.includes('excel')) return '📗';
+  if(type.startsWith('text/')) return '📄';
+  return '📎';
+};
+
+$('todayChip').textContent = new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+/* ============ Central Firebase Cloud & Storage Engine ============ */
+let firestoreDb = null;
+let firebaseStorage = null;
+
+const defaultConfig = {
+  apiKey: "AIzaSyAuNAhouA439wCQp8E8xctLL8aca9m8dHY",
+  authDomain: "doctor-habiba.firebaseapp.com",
+  projectId: "doctor-habiba",
+  storageBucket: "doctor-habiba.firebasestorage.app",
+  messagingSenderId: "463528816032",
+  appId: "1:463528816032:web:567267497498c33c5a48c5"
+};
+
+function openCloudModal(){ $('cloudModal').style.display = 'flex'; }
+function closeCloudModal(){ $('cloudModal').style.display = 'none'; }
+
+let ownerDriveToken = null;
+let ownerDriveFolderId = null;
+
+function initFirebase(){
+  if(typeof firebase === 'undefined'){
+    setTimeout(initFirebase, 300);
+    return;
+  }
+  if(firestoreDb) return; // Already initialized
+  try {
+    if(!firebase.apps.length) firebase.initializeApp(defaultConfig);
+    firestoreDb = firebase.firestore();
+    firebaseStorage = firebase.storage();
+    updateCloudUI();
+    subscribeCloudData();
+    listenOwnerDriveConfig();
+    console.log("🟢 Firebase Central Cloud connected successfully!");
+  } catch(err){
+    console.warn("Firebase Init notice:", err);
+    setTimeout(initFirebase, 1000);
+  }
+}
+
+function updateCloudUI(){
+  const btn = $('cloudBtn');
+  btn.innerHTML = `🟢 الكلاود المركزي متصل ✨`;
+  btn.style.borderColor = 'var(--mint)';
+  const statusEl = $('gdriveStatus');
+  if(statusEl){
+    if(ownerDriveToken){
+      statusEl.textContent = 'متصل (15GB+ مثبت) 🟢';
+      statusEl.style.color = 'var(--mint)';
+    } else {
+      statusEl.textContent = 'Firebase Storage (احتياطي) ☁️';
+      statusEl.style.color = 'var(--gold)';
+    }
+  }
+}
+
+/* ---- Connect Owner Google Drive ONCE as Admin ---- */
+async function connectOwnerGoogleDrive(){
+  if(location.protocol === 'file:'){
+    alert("💡 تنبيه هامي:\n\nربط Google Drive يتطلب فتح الموقع عبر سيرفر (http:// أو https:// أو رابط GitHub Pages) وليس فتح الملف مباشرة بصيغة file://.");
+    return;
+  }
+  if(typeof firebase === 'undefined'){ alert("مكتبة Firebase قيد التحميل..."); return; }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.addScope('https://www.googleapis.com/auth/drive.file');
+
+  try {
+    const result = await firebase.auth().signInWithPopup(provider);
+    if(result.credential && result.credential.accessToken){
+      const token = result.credential.accessToken;
+      // Get or Create Petal Planner Storage folder
+      const folderId = (await createDriveFolder(token)) || null;
+      const ownerEmail = (result.user && result.user.email) ? result.user.email : '';
+      
+      // Save to Firestore centralData/driveConfig safely
+      await firestoreDb.collection('centralData').doc('driveConfig').set({
+        token: token,
+        folderId: folderId,
+        ownerEmail: ownerEmail,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      ownerDriveToken = token;
+      ownerDriveFolderId = folderId;
+      updateCloudUI();
+      alert("🎉 تم تثبيت حساب Google Drive الخاص بك كـ سيرفر تخزين أساسي للموقع بنجاح!\n\nالآن أي زائر أو جهاز يرفع ملفات ستُحفظ مباشرة في حساب درايف الخاص بك بدون حاجة لتسجيل دخولهم!");
+    }
+  } catch(err){
+    console.error(err);
+    alert("تنبيه: " + (err.message || "عذراً لم نتمكن من الربط. يرجى تجربة إعادة المحاولة."));
+  }
+}
+
+async function createDriveFolder(token){
+  try {
+    const q = encodeURIComponent("name = 'Petal Planner Storage' and mimeType = 'application/vnd.google-apps.folder' and trashed = false");
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if(data.files && data.files.length) return data.files[0].id;
+
+    const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: 'Petal Planner Storage', mimeType: 'application/vnd.google-apps.folder' })
+    });
+    const folderData = await createRes.json();
+    return (folderData && folderData.id) ? folderData.id : null;
+  } catch(e){
+    return null;
+  }
+}
+
+function listenOwnerDriveConfig(){
+  if(!firestoreDb) return;
+  firestoreDb.collection('centralData').doc('driveConfig').onSnapshot(doc => {
+    if(doc.exists && doc.data()){
+      ownerDriveToken = doc.data().token;
+      ownerDriveFolderId = doc.data().folderId;
+      updateCloudUI();
+    }
+  });
+}
+
+/* ---- Upload Files via Cloudinary (Central Cloud Storage) ---- */
+const CLOUDINARY_CLOUD = 'ynvizbmz';
+const CLOUDINARY_PRESET = 'ir5bzovy';
+
+async function uploadToDrive(file){
+  try {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('upload_preset', CLOUDINARY_PRESET);
+    form.append('resource_type', 'auto');
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`,
+      { method: 'POST', body: form }
+    );
+    const data = await res.json();
+
+    if(data.secure_url){
+      console.log('✅ Uploaded to Cloudinary:', data.secure_url);
+      return {
+        driveId: data.public_id,
+        driveUrl: data.secure_url,
+        webViewLink: data.secure_url
+      };
+    } else {
+      console.warn('Cloudinary upload failed:', data);
+      return null;
+    }
+  } catch(e){
+    console.warn('Cloudinary upload error:', e);
+    return null;
+  }
+}
+
+/* ---- Central Cloud Realtime Sync (Firestore) ---- */
+function syncStateToCloud(collectionName, data){
+  if(!firestoreDb) return;
+  try {
+    firestoreDb.collection('centralData').doc(collectionName).set({
+      payload: JSON.stringify(data),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, {merge:true});
+  } catch(e){ console.warn("Firestore sync error:", e); }
+}
+
+function subscribeCloudData(){
+  if(!firestoreDb) return;
+  const collections = ['todos', 'calendar', 'burnout', 'completedItems', 'folders', 'ytPlaylists'];
+  collections.forEach(col => {
+    firestoreDb.collection('centralData').doc(col)
+      .onSnapshot(doc => {
+        if(doc.exists && doc.data() && doc.data().payload){
+          try {
+            const data = JSON.parse(doc.data().payload);
+            localStorage.setItem(col, JSON.stringify(data));
+            if(col === 'todos') { todos = data; renderTodos(); }
+            if(col === 'calendar') { calData = data; renderCalendar(); }
+            if(col === 'burnout') { boxes = data.boxes||[]; conns = data.conns||[]; renderBurnout(); }
+            if(col === 'completedItems') { completedItems = data; SECTIONS.forEach(renderFileSection); }
+            if(col === 'folders') { folders = data; SECTIONS.forEach(renderFolders); SECTIONS.forEach(renderFileSection); }
+            if(col === 'ytPlaylists') { ytPlaylists = data; renderYtPlaylists(); }
+          } catch(err){}
+        } else {
+          // If Firestore is empty for this item, push local data to Firestore so other devices get it!
+          let localData = null;
+          if(col === 'todos') localData = todos;
+          if(col === 'calendar') localData = calData;
+          if(col === 'burnout') localData = {boxes, conns:connections};
+          if(col === 'completedItems') localData = completedItems;
+          if(col === 'folders') localData = folders;
+          if(col === 'ytPlaylists') localData = ytPlaylists;
+          if(localData && (Array.isArray(localData) ? localData.length : Object.keys(localData).length)){
+            syncStateToCloud(col, localData);
+          }
+        }
+      });
+  });
+  // Listen to uploaded files from all devices
+  subscribeCloudFiles();
+}
+
+/* ---- Cloud Files Sync (cross-device) ---- */
+let cloudFiles = [];
+function subscribeCloudFiles(){
+  if(!firestoreDb) return;
+  firestoreDb.collection('uploadedFiles')
+    .onSnapshot(snapshot => {
+      cloudFiles = [];
+      snapshot.forEach(doc => cloudFiles.push(doc.data()));
+      cloudFiles.sort((a,b) => (b.date || 0) - (a.date || 0));
+      loadAllFiles();
+    }, err => {
+      console.warn('Cloud files subscription error:', err);
+    });
+}
+
+setTimeout(initFirebase, 300);
+
+/* ============ tabs ============ */
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('main .panel').forEach(p=>{p.style.display='none'; p.classList.remove('enter');});
+    btn.classList.add('active');
+    const p = $('panel-'+btn.dataset.tab);
+    p.style.display='block';
+    requestAnimationFrame(()=>p.classList.add('enter'));
+  });
+});
+
+/* ============ IndexedDB (files + songs) ============ */
+let db;
+const dbReq = indexedDB.open('petalPlannerDB', 2);
+dbReq.onupgradeneeded = e => {
+  const d = e.target.result;
+  if(!d.objectStoreNames.contains('songs')) d.createObjectStore('songs', {keyPath:'id'});
+  if(!d.objectStoreNames.contains('files')){
+    const store = d.createObjectStore('files', {keyPath:'id'});
+    store.createIndex('section','section',{unique:false});
+  }
+  if(!d.objectStoreNames.contains('bgPhotos')) d.createObjectStore('bgPhotos', {keyPath:'id'});
+};
+dbReq.onsuccess = e => { db = e.target.result; loadSongs(); loadAllFiles(); loadBgPhotos(); };
+
+/* ---- generic file sections (summaries / midterm / final / quizzes / explanation) ---- */
+const SECTIONS = ['summaries','midterm','final','quizzes','explanation'];
+const SECTION_PREFIX = {summaries:'sum', midterm:'mid', final:'fin', quizzes:'qz', explanation:'exp'};
+let filesBySection = {summaries:[], midterm:[], final:[], quizzes:[], explanation:[]};
+
+/* ---- folders (custom sub-sections inside each section) ---- */
+let folders = load('folders', []); // {id, section, name}
+let activeFolder = load('activeFolder', {summaries:null, midterm:null, final:null, quizzes:null, explanation:null});
+
+function renderFolders(section){
+  const prefix = SECTION_PREFIX[section];
+  const container = $(prefix+'-folders');
+  if(!container) return;
+  const secFolders = folders.filter(f=>f.section===section);
+  const active = activeFolder[section];
+  container.innerHTML = `
+    <div class="folder-chip ${active===null?'active':''}" onclick="setActiveFolder('${section}', null)">All</div>
+    ${secFolders.map(f=>`
+      <div class="folder-chip ${active===f.id?'active':''}" onclick="setActiveFolder('${section}','${f.id}')">
+        ${esc(f.name)}<span class="folder-del" onclick="event.stopPropagation(); deleteFolder('${f.id}','${section}')">×</span>
+      </div>`).join('')}
+    <div class="folder-chip add" onclick="promptAddFolder('${section}')">+ New section</div>
+  `;
+}
+function setActiveFolder(section, id){
+  activeFolder[section] = id;
+  save('activeFolder', activeFolder);
+  renderFolders(section);
+  renderFileSection(section);
+  if(section === 'explanation') renderYtPlaylists();
+}
+function promptAddFolder(section){
+  const name = prompt('Name this section:');
+  if(!name || !name.trim()) return;
+  folders.push({id:uid(), section, name:name.trim()});
+  save('folders', folders);
+  syncStateToCloud('folders', folders);
+  renderFolders(section);
+}
+function deleteFolder(id, section){
+  if(!confirm('Delete this section? Its files will move back to "All".')) return;
+  folders = folders.filter(f=>f.id!==id);
+  save('folders', folders);
+  syncStateToCloud('folders', folders);
+  if(activeFolder[section] === id){ activeFolder[section] = null; save('activeFolder', activeFolder); }
+  if(db){
+    try {
+      const tx = db.transaction('files','readwrite');
+      const store = tx.objectStore('files');
+      const req = store.getAll();
+      req.onsuccess = () => {
+        req.result.filter(f=>f.folderId===id).forEach(f=>{ f.folderId = null; store.put(f); });
+      };
+      tx.oncomplete = () => { loadAllFiles(); renderFolders(section); };
+    } catch(e){
+      loadAllFiles(); renderFolders(section);
+    }
+  } else {
+    loadAllFiles(); renderFolders(section);
+  }
+}
+
+function loadAllFiles(){
+  const processAndRender = (localFiles = []) => {
+    filesBySection = {summaries:[], midterm:[], final:[], quizzes:[], explanation:[]};
+    const localIds = new Set();
+
+    // 1. Load local files (IndexedDB) and auto-upload any un-synced files
+    localFiles.forEach(f => {
+      let url = '';
+      if(f.blob) {
+        try { url = URL.createObjectURL(f.blob); } catch(e){}
+      }
+      if(!url && f.driveUrl) url = f.driveUrl;
+      if(!url && f.cloudUrl) url = f.cloudUrl;
+      localIds.add(f.id);
+      if(f.section && filesBySection[f.section]) filesBySection[f.section].push({...f, url});
+
+      // Auto-sync old local files to Cloudinary + Firestore if not synced yet
+      if(f.blob && !f.cloudUrl && !f.driveUrl){
+        uploadToDrive(f.blob).then(driveData => {
+          if(driveData && driveData.driveUrl && firestoreDb){
+            firestoreDb.collection('uploadedFiles').doc(f.id).set({
+              id: f.id,
+              name: f.name,
+              type: f.type || 'application/octet-stream',
+              size: f.size,
+              section: f.section,
+              folderId: f.folderId || null,
+              cloudUrl: driveData.driveUrl,
+              publicId: driveData.driveId || null,
+              date: f.date || Date.now()
+            }).catch(e => console.warn('Auto-sync file error:', e));
+          }
+        }).catch(e => console.warn('Auto-upload error:', e));
+      }
+    });
+
+    // 2. Load cloud files (Firestore - from all devices)
+    (cloudFiles || []).forEach(f => {
+      if(!localIds.has(f.id) && f.cloudUrl && f.section && filesBySection[f.section]){
+        filesBySection[f.section].push({...f, url: f.cloudUrl});
+      }
+    });
+
+    SECTIONS.forEach(renderFileSection);
+  };
+
+  if(db){
+    try {
+      const tx = db.transaction('files','readonly');
+      const req = tx.objectStore('files').getAll();
+      req.onsuccess = () => processAndRender(req.result || []);
+      req.onerror = () => processAndRender([]);
+    } catch(e){
+      processAndRender([]);
+    }
+  } else {
+    processAndRender([]);
+  }
+}
+
+function addFiles(section, fileList){
+  const folderId = activeFolder[section] || null;
+  const filesArray = Array.from(fileList);
+
+  filesArray.forEach(f => {
+    const fileId = uid();
+
+    // Show a temporary "uploading" card immediately
+    const tempItem = {
+      id: fileId,
+      section,
+      folderId,
+      name: f.name,
+      type: f.type || 'application/octet-stream',
+      size: f.size,
+      cloudUrl: null,
+      uploading: true,
+      date: Date.now()
+    };
+    if(!filesBySection[section]) filesBySection[section] = [];
+    filesBySection[section].unshift({...tempItem, url: ''});
+    renderFileSection(section);
+
+    // Upload to Cloudinary then save to Firestore
+    uploadToDrive(f).then(driveData => {
+      if(driveData && driveData.driveUrl){
+        const saveFileRecord = (attempts = 0) => {
+          if(firestoreDb){
+            firestoreDb.collection('uploadedFiles').doc(fileId).set({
+              id: fileId,
+              name: f.name,
+              type: f.type || 'application/octet-stream',
+              size: f.size,
+              section: section,
+              folderId: folderId || null,
+              cloudUrl: driveData.driveUrl,
+              publicId: driveData.driveId || null,
+              date: tempItem.date
+            }).then(() => {
+              console.log("✅ File record saved to Firestore:", f.name);
+            }).catch(e => console.warn('Firestore file sync error:', e));
+          } else if(attempts < 20) {
+            setTimeout(() => saveFileRecord(attempts + 1), 500);
+          }
+        };
+        saveFileRecord();
+      } else {
+        // Remove temp card if upload failed
+        filesBySection[section] = (filesBySection[section] || []).filter(x => x.id !== fileId);
+        renderFileSection(section);
+        alert('⚠️ تعذّر رفع الملف، تحققي من اتصال الإنترنت وحاولي تاني.');
+      }
+    }).catch(err => {
+      console.warn('Upload error:', err);
+      filesBySection[section] = (filesBySection[section] || []).filter(x => x.id !== fileId);
+      renderFileSection(section);
+    });
+  });
+}
+function deleteFile(id){
+  // Remove from Firestore (cloud - cross-device)
+  if(firestoreDb){
+    firestoreDb.collection('uploadedFiles').doc(id).delete()
+      .catch(e => console.warn('Firestore delete error:', e));
+  }
+  // Also remove from local temp display immediately
+  SECTIONS.forEach(sec => {
+    if(filesBySection[sec]) filesBySection[sec] = filesBySection[sec].filter(f => f.id !== id);
+  });
+  SECTIONS.forEach(renderFileSection);
+}
+function openFile(url, type, name){
+  if(type.startsWith('image/') || type === 'application/pdf'){
+    window.open(url, '_blank');
+  } else {
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+}
+function renderFileSection(section){
+  const prefix = SECTION_PREFIX[section];
+  renderFolders(section);
+  const active = activeFolder[section];
+  let list = filesBySection[section];
+  if(active) list = list.filter(f=>f.folderId===active);
+  const el = $(prefix+'-list');
+  const stats = $(prefix+'-stats');
+  if(!list.length){
+    el.innerHTML = '<div class="empty">No files yet — upload your first one 🌷</div>';
+    stats.innerHTML = '';
+    return;
+  }
+  const totalSize = list.reduce((s,f)=>s+f.size, 0);
+  const doneCount = list.filter(f=>completedItems[f.id]).length;
+  stats.innerHTML = `<span class="pill">${list.length} file${list.length>1?'s':''}</span><span class="pill">${fmtSize(totalSize)} total</span>${doneCount?`<span class="pill">✅ ${doneCount} done</span>`:''}`;
+  el.innerHTML = list.sort((a,b)=>b.date-a.date).map(f => {
+    const isDone = !!completedItems[f.id];
+    const isUploading = !!f.uploading;
+    return `
+    <div class="card ${isDone?'completed':''}" style="${isUploading?'opacity:0.6;':''}}">
+      <div class="thumb">${f.type && f.type.startsWith('image/') && f.url ? `<img src="${f.url}">` : fileIcon(f.type||'')}</div>
+      <h4 title="${esc(f.name)}">${esc(f.name)} ${isUploading ? '<span style="font-size:11px;color:#aaa;">⏳ جاري الرفع...</span>' : ''}</h4>
+      <div class="meta">${fmtSize(f.size||0)} · ${new Date(f.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+      <div class="actions">
+        <button class="done-chk ${isDone?'checked':''}" onclick="event.stopPropagation(); toggleComplete('${f.id}','${section}')" title="${isDone?'Mark incomplete':'Mark as done'}">${isDone?'✓':''}</button>
+        <button class="open" onclick="openFile('${f.url}','${f.type||''}','${esc(f.name)}')" ${isUploading||!f.url?'disabled style="opacity:0.4"':''}>Open</button>
+        <button class="del" onclick="deleteFile('${f.id}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+SECTIONS.forEach(section=>{
+  const prefix = SECTION_PREFIX[section];
+  const dropEl = $(prefix+'-drop');
+  const inputEl = $(prefix+'-input');
+  inputEl.addEventListener('change', e => { addFiles(section, e.target.files); e.target.value=''; });
+  dropEl.addEventListener('dragover', e => { e.preventDefault(); dropEl.classList.add('drag'); });
+  dropEl.addEventListener('dragleave', () => dropEl.classList.remove('drag'));
+  dropEl.addEventListener('drop', e => {
+    e.preventDefault(); dropEl.classList.remove('drag');
+    if(e.dataTransfer.files.length) addFiles(section, e.dataTransfer.files);
+  });
+});
+
+/* ============ TODO ============ */
+let todos = load('todos', []);
+function renderTodos(){
+  const el = $('td-list');
+  if(!todos.length){ el.innerHTML = '<div class="empty">No tasks — enjoy the calm 🌷</div>'; return; }
+  const order = {high:0, med:1, low:2};
+  const sorted = [...todos].sort((a,b)=> a.done-b.done || order[a.prio]-order[b.prio]);
+  const label = {high:'High', med:'Medium', low:'Low'};
+  el.innerHTML = sorted.map(t=>`
+    <div class="todo-item ${t.done?'done':''}">
+      <div class="chk" onclick="toggleTodo('${t.id}')">${t.done?'✓':''}</div>
+      <div class="txt">${esc(t.text)} ${t.date?`<small style="color:var(--ink)">· ${new Date(t.date).toLocaleDateString('en-US',{day:'numeric',month:'short'})}</small>`:''}</div>
+      <span class="prio ${t.prio}">${label[t.prio]}</span>
+      <button class="del" onclick="delTodo('${t.id}')">Delete</button>
+    </div>`).join('');
+}
+function addTodo(){
+  const text = $('td-text').value.trim();
+  const prio = $('td-prio').value;
+  const date = $('td-date').value;
+  if(!text) return;
+  todos.push({id:uid(), text, prio, date, done:false});
+  save('todos', todos);
+  syncStateToCloud('todos', todos);
+  $('td-text').value=''; $('td-date').value='';
+  renderTodos();
+}
+function toggleTodo(id){
+  const t = todos.find(x=>x.id===id); t.done = !t.done;
+  save('todos', todos);
+  syncStateToCloud('todos', todos);
+  renderTodos();
+}
+function delTodo(id){
+  todos = todos.filter(x=>x.id!==id);
+  save('todos', todos);
+  syncStateToCloud('todos', todos);
+  renderTodos();
+}
+
+/* ============ MUSIC ============ */
+let playlist = [];
+let currentIdx = -1;
+const audioEl = $('audioEl');
+
+/* -- Music tab toggle -- */
+function switchMusicMode(mode){
+  document.querySelectorAll('#music-toggle button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#panel-music .upload-section').forEach(s=>s.classList.remove('active'));
+  if(mode==='file'){
+    document.querySelector('#music-toggle button:first-child').classList.add('active');
+    $('music-file-section').classList.add('active');
+  } else {
+    document.querySelector('#music-toggle button:last-child').classList.add('active');
+    $('music-link-section').classList.add('active');
+  }
+}
+
+function loadSongs(){
+  const tx = db.transaction('songs','readonly');
+  const req = tx.objectStore('songs').getAll();
+  req.onsuccess = () => {
+    playlist = req.result.map(s => {
+      if(s.blob) return {...s, url: URL.createObjectURL(s.blob)};
+      return {...s}; // URL songs already have url
+    });
+    renderSongs();
+  };
+}
+$('audioInput').addEventListener('change', e => {
+  const files = Array.from(e.target.files);
+  const tx = db.transaction('songs','readwrite');
+  const store = tx.objectStore('songs');
+  files.forEach(f => store.put({id:uid(), name:f.name.replace(/\.[^/.]+$/,''), blob:f}));
+  tx.oncomplete = loadSongs;
+  e.target.value='';
+});
+
+/* -- Add song by URL -- */
+function addSongByUrl(){
+  const url = $('song-url').value.trim();
+  if(!url){ alert('Please paste a valid audio URL'); return; }
+  let name = $('song-name').value.trim();
+  if(!name){
+    try { name = decodeURIComponent(url.split('/').pop().split('?')[0].replace(/\.[^/.]+$/,'')); } catch(e){}
+    if(!name) name = 'Linked Song';
+  }
+  const tx = db.transaction('songs','readwrite');
+  tx.objectStore('songs').put({id:uid(), name, url, isLink:true});
+  tx.oncomplete = () => { loadSongs(); $('song-url').value=''; $('song-name').value=''; };
+}
+
+function renderSongs(){
+  const el = $('song-list');
+  if(!playlist.length){ el.innerHTML = '<div class="empty">No songs yet — upload or add a link 🌷</div>'; return; }
+  el.innerHTML = playlist.map((s,i)=>{
+    const isDone = !!completedItems[s.id];
+    return `
+    <div class="song-row ${i===currentIdx?'playing':''} ${isDone?'song-done':''}" onclick="playSong(${i})">
+      <button class="song-chk ${isDone?'checked':''}" onclick="event.stopPropagation(); toggleComplete('${s.id}','music')" title="${isDone?'Mark incomplete':'Mark as done'}">${isDone?'✓':''}</button>
+      <span>${i===currentIdx?'🎶': (s.isLink ? '🔗' : '🎵')}</span>
+      <span class="n">${esc(s.name)}</span>
+      <button class="del" onclick="event.stopPropagation(); deleteSong('${s.id}')">Delete</button>
+    </div>`;
+  }).join('');
+}
+function deleteSong(id){
+  const tx = db.transaction('songs','readwrite');
+  tx.objectStore('songs').delete(id);
+  tx.oncomplete = () => {
+    if(playlist[currentIdx]?.id === id){ audioEl.pause(); currentIdx=-1; updateNow(); }
+    loadSongs();
+  };
+}
+function playSong(i){
+  currentIdx = i;
+  audioEl.src = playlist[i].url;
+  audioEl.play();
+  updateNow();
+  renderSongs();
+}
+function togglePlay(){
+  if(currentIdx===-1){ if(playlist.length) playSong(0); return; }
+  if(audioEl.paused) audioEl.play(); else audioEl.pause();
+}
+function nextSong(){ if(playlist.length) playSong((currentIdx+1)%playlist.length); }
+function prevSong(){ if(playlist.length) playSong((currentIdx-1+playlist.length)%playlist.length); }
+function updateNow(){
+  const s = playlist[currentIdx];
+  $('nowTitle').textContent = s ? s.name : 'Nothing playing';
+  $('nowSub').textContent = s ? 'Now playing' : 'Upload a song in the Music tab';
+}
+audioEl.addEventListener('play', ()=>{ $('playBtn').textContent='⏸'; $('vinyl').classList.add('spin'); });
+audioEl.addEventListener('pause', ()=>{ $('playBtn').textContent='▶'; $('vinyl').classList.remove('spin'); });
+audioEl.addEventListener('ended', nextSong);
+audioEl.addEventListener('timeupdate', ()=>{
+  if(!audioEl.duration) return;
+  $('seek').value = (audioEl.currentTime/audioEl.duration)*100;
+  $('curT').textContent = fmtTime(audioEl.currentTime);
+  $('durT').textContent = fmtTime(audioEl.duration);
+});
+$('seek').addEventListener('input', e=>{
+  if(audioEl.duration) audioEl.currentTime = (e.target.value/100)*audioEl.duration;
+});
+function fmtTime(t){ t=Math.floor(t); return Math.floor(t/60)+':'+String(t%60).padStart(2,'0'); }
+
+/* ============ EXPLANATION - YouTube Playlists ============ */
+let ytPlaylists = load('ytPlaylists', []); // {id, url, playlistId, title}
+
+function switchExpMode(mode){
+  document.querySelectorAll('#exp-toggle button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#panel-explanation .upload-section').forEach(s=>s.classList.remove('active'));
+  if(mode==='file'){
+    document.querySelector('#exp-toggle button:first-child').classList.add('active');
+    $('exp-file-section').classList.add('active');
+  } else {
+    document.querySelector('#exp-toggle button:last-child').classList.add('active');
+    $('exp-playlist-section').classList.add('active');
+  }
+}
+
+function extractYtPlaylistId(url){
+  // Support various YouTube playlist URL formats
+  const patterns = [
+    /[?&]list=([a-zA-Z0-9_-]+)/,
+    /playlist\?list=([a-zA-Z0-9_-]+)/,
+  ];
+  for(const p of patterns){
+    const m = url.match(p);
+    if(m) return m[1];
+  }
+  return null;
+}
+
+function addYtPlaylist(){
+  const url = $('yt-playlist-url').value.trim();
+  if(!url){ alert('من فضلك ضع رابط يوتيوب صحيح'); return; }
+  if(!url.includes('youtube.com') && !url.includes('youtu.be')){
+    alert('برجاء إدخال رابط يوتيوب صحيح (يحتوي على youtube.com أو youtu.be)'); return;
+  }
+  let title = $('yt-playlist-title') ? $('yt-playlist-title').value.trim() : '';
+  if(!title){
+    title = 'قائمة شرح يوتيوب 📺';
+  }
+  const folderId = activeFolder['explanation'] || null;
+  ytPlaylists.push({id:uid(), url, title, folderId, date:Date.now()});
+  save('ytPlaylists', ytPlaylists);
+  syncStateToCloud('ytPlaylists', ytPlaylists);
+  $('yt-playlist-url').value='';
+  if($('yt-playlist-title')) $('yt-playlist-title').value='';
+  renderYtPlaylists();
+}
+
+function deleteYtPlaylist(id){
+  ytPlaylists = ytPlaylists.filter(p=>p.id!==id);
+  save('ytPlaylists', ytPlaylists);
+  syncStateToCloud('ytPlaylists', ytPlaylists);
+  renderYtPlaylists();
+}
+
+function renderYtPlaylists(){
+  const el = $('yt-playlist-list');
+  if(!el) return;
+  const active = activeFolder['explanation'];
+  let list = ytPlaylists || [];
+  if(active){
+    list = list.filter(p => p.folderId === active);
+  }
+  if(!list.length){ el.innerHTML=''; return; }
+  el.innerHTML = list.map(p=>`
+    <div class="yt-playlist-card" style="padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; background:#FFFDF8; border:1px solid var(--line); border-radius:14px; margin-bottom:10px;">
+      <div style="display:flex; align-items:center; gap:12px; overflow:hidden;">
+        <span style="font-size:26px;">▶️</span>
+        <div style="overflow:hidden;">
+          <h4 style="margin:0 0 3px; font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--plum);">${esc(p.title)}</h4>
+          <a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" style="font-size:12.5px; color:var(--pink-deep); text-decoration:underline;">${esc(p.url)}</a>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; flex:0 0 auto;">
+        <a class="btn" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" style="padding:8px 16px; font-size:13px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#FF0000; color:#fff;">▶️ فتح في يوتيوب</a>
+        <button class="del" onclick="deleteYtPlaylist('${p.id}')">حذف</button>
+      </div>
+    </div>`).join('');
+}
+
+/* ============ BACKGROUND PHOTOS ============ */
+let bgPhotos = [];
+function loadBgPhotos(){
+  const tx = db.transaction('bgPhotos','readonly');
+  const req = tx.objectStore('bgPhotos').getAll();
+  req.onsuccess = () => {
+    bgPhotos = req.result.map(p => ({...p, url: URL.createObjectURL(p.blob)}));
+    renderBgScatter();
+    renderBgThumbs();
+  };
+}
+function addBgPhotos(fileList){
+  const tx = db.transaction('bgPhotos','readwrite');
+  const store = tx.objectStore('bgPhotos');
+  Array.from(fileList).forEach(f => store.put({id:uid(), blob:f, date:Date.now()}));
+  tx.oncomplete = loadBgPhotos;
+}
+function deleteBgPhoto(id){
+  const tx = db.transaction('bgPhotos','readwrite');
+  tx.objectStore('bgPhotos').delete(id);
+  tx.oncomplete = loadBgPhotos;
+}
+function shuffle(arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function renderBgScatter(){
+  let layer = document.querySelector('.bg-photo-layer');
+  if(!layer){
+    layer = document.createElement('div');
+    layer.className='bg-photo-layer';
+    document.body.prepend(layer);
+  }
+  layer.innerHTML='';
+  if(!bgPhotos.length) return;
+  const shuffled = shuffle(bgPhotos);
+  const n = shuffled.length;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const cols = Math.max(1, Math.round(Math.sqrt(n * (vw/vh))));
+  const rows = Math.ceil(n/cols);
+  const cellW = vw/cols, cellH = vh/rows;
+  shuffled.forEach((photo,i)=>{
+    const col = i % cols, row = Math.floor(i/cols);
+    const size = Math.min(240, Math.max(100, Math.min(cellW,cellH)*0.78));
+    const img = document.createElement('img');
+    img.src = photo.url;
+    img.className = 'bg-photo';
+    img.style.width = size+'px';
+    img.style.height = size+'px';
+    const maxJitterX = Math.max(0, cellW-size);
+    const maxJitterY = Math.max(0, cellH-size);
+    img.style.left = (col*cellW + Math.random()*maxJitterX)+'px';
+    img.style.top = (row*cellH + Math.random()*maxJitterY)+'px';
+    img.style.setProperty('--rot', (Math.random()*26-13)+'deg');
+    img.style.setProperty('--dx', (Math.random()*44-22)+'px');
+    img.style.setProperty('--dy', (Math.random()*44-22)+'px');
+    img.style.setProperty('--dur', (10+Math.random()*8)+'s');
+    img.style.setProperty('--delay', (Math.random()*6)+'s');
+    layer.appendChild(img);
+  });
+}
+function renderBgThumbs(){
+  const el = $('bg-thumbs');
+  if(!el) return;
+  el.innerHTML = bgPhotos.map(p => `
+    <div class="bg-thumb">
+      <img src="${p.url}">
+      <button onclick="deleteBgPhoto('${p.id}')">×</button>
+    </div>`).join('');
+}
+function openBgModal(){ $('bgModal').style.display='flex'; renderBgThumbs(); }function closeBgModal(){ $('bgModal').style.display='none'; pendingBgFiles=[]; renderPendingPreview(); }
+
+let pendingBgFiles = [];
+function renderPendingPreview(){
+  const el = $('bg-pending');
+  const btn = $('bg-upload-btn');
+  if(!pendingBgFiles.length){ el.innerHTML=''; btn.style.display='none'; return; }
+  el.innerHTML = pendingBgFiles.map((f,i)=>`
+    <div class="bg-thumb">
+      <img src="${URL.createObjectURL(f)}">
+      <button onclick="removePending(${i})">×</button>
+    </div>`).join('');
+  btn.style.display = 'inline-block';
+  btn.textContent = `Upload ${pendingBgFiles.length} photo${pendingBgFiles.length>1?'s':''}`;
+}
+function removePending(i){
+  pendingBgFiles.splice(i,1);
+  renderPendingPreview();
+}
+function confirmBgUpload(){
+  if(!pendingBgFiles.length) return;
+  addBgPhotos(pendingBgFiles);
+  pendingBgFiles = [];
+  renderPendingPreview();
+}
+$('bg-input').addEventListener('change', e => {
+  pendingBgFiles = pendingBgFiles.concat(Array.from(e.target.files));
+  renderPendingPreview();
+  e.target.value='';
+});
+$('bg-drop').addEventListener('dragover', e => { e.preventDefault(); $('bg-drop').classList.add('drag'); });
+$('bg-drop').addEventListener('dragleave', () => $('bg-drop').classList.remove('drag'));
+$('bg-drop').addEventListener('drop', e => {
+  e.preventDefault(); $('bg-drop').classList.remove('drag');
+  if(e.dataTransfer.files.length){
+    pendingBgFiles = pendingBgFiles.concat(Array.from(e.dataTransfer.files));
+    renderPendingPreview();
+  }
+});
+
+let bgResizeTimer;
+window.addEventListener('resize', ()=>{
+  clearTimeout(bgResizeTimer);
+  bgResizeTimer = setTimeout(renderBgScatter, 300);
+});
+
+/* ============ CALENDAR ============ */
+const DAY_COLORS = [
+  {key:'red', hex:'#E1706E', label:'Tough day'},
+  {key:'orange', hex:'#EFA96A', label:'Normal day'},
+  {key:'yellow', hex:'#F0D46A', label:'Good day'},
+  {key:'green', hex:'#8FCB9B', label:'Great day'},
+  {key:'blue', hex:'#8FC1E3', label:'Calm day'},
+  {key:'purple', hex:'#C9B6E6', label:'Inspired day'},
+  {key:'pink', hex:'#F3B6C4', label:'Loved day'},
+];
+let dayColors = load('dayColors', {});
+
+function localDateKey(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function renderLegend(){
+  $('legend').innerHTML = DAY_COLORS.map(c=>`<div class="lg"><span class="dot" style="background:${c.hex}"></span>${c.label}</div>`).join('');
+}
+function renderCalendar(){
+  const wrap = $('calendarWrap');
+  const now = new Date();
+  const todayKey = localDateKey(now);
+  const yearEnd = new Date(now.getFullYear(), 11, 31);
+  let cursor = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const weekHeadHTML = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<span>${d}</span>`).join('');
+  let html = '';
+  while(cursor <= yearEnd){
+    const y = cursor.getFullYear(), m = cursor.getMonth();
+    const firstDay = new Date(y,m,1);
+    const daysInMonth = new Date(y,m+1,0).getDate();
+    const leading = firstDay.getDay();
+    let cells='';
+    for(let i=0;i<leading;i++) cells += '<div class="day-cell empty"></div>';
+    for(let d=1; d<=daysInMonth; d++){
+      const key = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      const isToday = key === todayKey;
+      const colorKey = dayColors[key];
+      const colorHex = colorKey ? (DAY_COLORS.find(c=>c.key===colorKey)||{}).hex : null;
+      cells += `<div class="day-cell ${isToday?'today':''} ${colorHex?'colored':''}" data-date="${key}" ${colorHex?`style="background:${colorHex}"`:''} onclick="openColorPopup(event,'${key}')">
+        <span class="num">${d}</span>
+      </div>`;
+    }
+    html += `<div class="month-card">
+      <h3>${monthNames[m]} ${y}</h3>
+      <div class="week-head">${weekHeadHTML}</div>
+      <div class="month-grid">${cells}</div>
+    </div>`;
+    cursor = new Date(y, m+1, 1);
+  }
+  wrap.innerHTML = html;
+}
+
+let activePopup = null;
+function closePopup(){
+  if(activePopup){ activePopup.remove(); activePopup=null; document.removeEventListener('click', outsideClose); }
+}
+function outsideClose(e){ if(activePopup && !activePopup.contains(e.target)) closePopup(); }
+
+function openColorPopup(e, key){
+  e.stopPropagation();
+  closePopup();
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pop = document.createElement('div');
+  pop.className='color-popup';
+  let top = rect.bottom+8, left = Math.min(rect.left, window.innerWidth-240);
+  if(top > window.innerHeight-140) top = rect.top-150;
+  pop.style.top = top+'px';
+  pop.style.left = Math.max(10,left)+'px';
+  pop.innerHTML = DAY_COLORS.map(c=>`<div class="sw" style="background:${c.hex}" title="${c.label}" onclick="chooseColor(event,'${key}','${c.key}')"></div>`).join('') +
+    `<div class="clear" title="Clear color" onclick="chooseColor(event,'${key}',null)">✕</div>`;
+  document.body.appendChild(pop);
+  activePopup = pop;
+  setTimeout(()=>document.addEventListener('click', outsideClose), 0);
+}
+
+function chooseColor(e, key, colorKey){
+  e.stopPropagation();
+  closePopup();
+  if(colorKey===null){
+    delete dayColors[key]; save('dayColors', dayColors); syncStateToCloud('calendar', dayColors); renderCalendar(); return;
+  }
+  dayColors[key] = colorKey;
+  save('dayColors', dayColors);
+  syncStateToCloud('calendar', dayColors);
+  const cell = document.querySelector(`.day-cell[data-date="${key}"]`);
+  const hex = DAY_COLORS.find(c=>c.key===colorKey).hex;
+  if(!cell) return;
+  cell.classList.add('colored');
+  const fill = document.createElement('div');
+  fill.className='fill';
+  fill.style.setProperty('--clr', hex);
+  cell.insertBefore(fill, cell.firstChild);
+  cell.classList.add('animating');
+  setTimeout(()=>{
+    cell.style.background = hex;
+    cell.classList.remove('animating');
+    cell.classList.add('popIn');
+    fill.remove();
+    setTimeout(()=>cell.classList.remove('popIn'), 400);
+  }, 420);
+}
+
+/* ============ BURNOUT BOARD ============ */
+const BOX_COLORS = [
+  {key:'pink', hex:'#F3B6C4'},
+  {key:'lavender', hex:'#CDB8E6'},
+  {key:'gold', hex:'#F3C98A'},
+  {key:'mint', hex:'#B9E3D3'},
+  {key:'blue', hex:'#AED4EC'},
+  {key:'cream', hex:'#FFF6EA'},
+];
+let boxes = load('burnoutBoxes', []);
+let connections = load('burnoutConnections', []);
+
+function renderBurnout(){
+  const inner = $('canvasInner');
+  inner.querySelectorAll('.think-box').forEach(b=>b.remove());
+  boxes.forEach(b=> inner.appendChild(createBoxEl(b)));
+  drawConnections();
+}
+
+function createBoxEl(b){
+  const div = document.createElement('div');
+  div.className='think-box';
+  div.dataset.id = b.id;
+  div.style.left=b.x+'px'; div.style.top=b.y+'px'; div.style.width=b.w+'px'; div.style.height=b.h+'px';
+  div.style.background = (BOX_COLORS.find(c=>c.key===b.color)||BOX_COLORS[0]).hex;
+  div.innerHTML = `
+    <div class="box-head">
+      <div class="color-dots">${BOX_COLORS.map(c=>`<span style="background:${c.hex}" data-color="${c.key}"></span>`).join('')}</div>
+      <button class="box-del">×</button>
+    </div>
+    <div class="box-body" contenteditable spellcheck="false">${esc(b.text)}</div>
+    <div class="connector top"></div>
+    <div class="connector right"></div>
+    <div class="connector bottom"></div>
+    <div class="connector left"></div>
+    <div class="resize-handle"></div>
+  `;
+  div.querySelector('.box-head').addEventListener('mousedown', e=>{
+    if(e.target.closest('.color-dots') || e.target.closest('.box-del')) return;
+    startDrag(e, b.id);
+  });
+  div.querySelectorAll('.color-dots span').forEach(sw=>{
+    sw.addEventListener('click', ()=> setBoxColor(b.id, sw.dataset.color));
+  });
+  div.querySelector('.box-del').addEventListener('click', ()=> deleteBox(b.id));
+  div.querySelector('.box-body').addEventListener('blur', function(){ setBoxText(b.id, this.innerText); });
+  div.querySelector('.resize-handle').addEventListener('mousedown', e=> startResize(e, b.id));
+  div.querySelectorAll('.connector').forEach(c=>{
+    c.addEventListener('mousedown', e=>{ e.stopPropagation(); e.preventDefault(); startConnect(b.id); });
+  });
+  return div;
+}
+
+function addBox(){
+  const offset = (boxes.length*24) % 260;
+  const box = {id:uid(), x:60+offset, y:50+offset, w:190, h:130, text:'New thought...', color:BOX_COLORS[boxes.length % BOX_COLORS.length].key};
+  boxes.push(box);
+  save('burnoutBoxes', boxes);
+  $('canvasInner').appendChild(createBoxEl(box));
+  drawConnections();
+}
+function deleteBox(id){
+  boxes = boxes.filter(b=>b.id!==id);
+  connections = connections.filter(c=>c.from!==id && c.to!==id);
+  save('burnoutBoxes', boxes); save('burnoutConnections', connections);
+  renderBurnout();
+}
+function setBoxColor(id, colorKey){
+  const b = boxes.find(x=>x.id===id); if(!b) return;
+  b.color = colorKey;
+  save('burnoutBoxes', boxes);
+  const el = document.querySelector(`.think-box[data-id="${id}"]`);
+  if(el) el.style.background = BOX_COLORS.find(c=>c.key===colorKey).hex;
+}
+function saveBurnoutState(){
+  save('burnoutBoxes', boxes);
+  save('burnoutConnections', connections);
+  syncStateToCloud('burnout', {boxes, conns:connections});
+}
+function setBoxText(id, text){
+  const b = boxes.find(x=>x.id===id); if(!b) return;
+  b.text = text;
+  saveBurnoutState();
+}
+function clearBurnout(){
+  if(!confirm('Clear the whole board? This removes every box and connection.')) return;
+  boxes=[]; connections=[];
+  save('burnoutBoxes', boxes); save('burnoutConnections', connections);
+  renderBurnout();
+}
+
+function startDrag(e, id){
+  e.preventDefault();
+  const box = boxes.find(x=>x.id===id);
+  const startX = e.clientX, startY = e.clientY;
+  const origX = box.x, origY = box.y;
+  const el = document.querySelector(`.think-box[data-id="${id}"]`);
+  el.classList.add('dragging');
+  function onMove(ev){
+    box.x = Math.max(0, origX + (ev.clientX-startX));
+    box.y = Math.max(0, origY + (ev.clientY-startY));
+    el.style.left=box.x+'px'; el.style.top=box.y+'px';
+    drawConnections();
+  }
+  function onUp(){
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    el.classList.remove('dragging');
+    save('burnoutBoxes', boxes);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+function startResize(e, id){
+  e.preventDefault(); e.stopPropagation();
+  const box = boxes.find(x=>x.id===id);
+  const startX = e.clientX, startY = e.clientY, origW = box.w, origH = box.h;
+  const el = document.querySelector(`.think-box[data-id="${id}"]`);
+  function onMove(ev){
+    box.w = Math.max(140, origW + (ev.clientX-startX));
+    box.h = Math.max(90, origH + (ev.clientY-startY));
+    el.style.width=box.w+'px'; el.style.height=box.h+'px';
+    drawConnections();
+  }
+  function onUp(){
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    save('burnoutBoxes', boxes);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+function toCanvasCoords(clientX, clientY){
+  const wrap = $('canvasWrap');
+  const r = wrap.getBoundingClientRect();
+  return {x: clientX - r.left + wrap.scrollLeft, y: clientY - r.top + wrap.scrollTop};
+}
+function boxCenter(id){
+  const b = boxes.find(x=>x.id===id);
+  if(!b) return null;
+  return {x: b.x + b.w/2, y: b.y + b.h/2};
+}
+
+function startConnect(sourceId){
+  const svg = $('connLayer');
+  const tempLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+  tempLine.setAttribute('stroke', '#E1839B');
+  tempLine.setAttribute('stroke-width','2');
+  tempLine.setAttribute('stroke-dasharray','5,4');
+  svg.appendChild(tempLine);
+
+  function onMove(ev){
+    const pos = toCanvasCoords(ev.clientX, ev.clientY);
+    const src = boxCenter(sourceId);
+    if(!src) return;
+    tempLine.setAttribute('x1', src.x); tempLine.setAttribute('y1', src.y);
+    tempLine.setAttribute('x2', pos.x); tempLine.setAttribute('y2', pos.y);
+  }
+  function onUp(ev){
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    tempLine.remove();
+    const targetEl = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('.think-box');
+    if(targetEl && targetEl.dataset.id !== sourceId){
+      const targetId = targetEl.dataset.id;
+      const exists = connections.some(c => (c.from===sourceId && c.to===targetId) || (c.from===targetId && c.to===sourceId));
+      if(!exists){
+        connections.push({id:uid(), from:sourceId, to:targetId});
+        save('burnoutConnections', connections);
+      }
+    }
+    drawConnections();
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+function drawConnections(){
+  const svg = $('connLayer');
+  svg.innerHTML = `<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#4A3350"/></marker></defs>`;
+  connections.forEach(c=>{
+    const a = boxCenter(c.from), b = boxCenter(c.to);
+    if(!a || !b) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',a.x); line.setAttribute('y1',a.y);
+    line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
+    line.setAttribute('stroke','#4A3350');
+    line.setAttribute('stroke-width','2.5');
+    line.setAttribute('opacity','0.5');
+    line.setAttribute('marker-end','url(#arrow)');
+    line.addEventListener('click', ()=>{
+      connections = connections.filter(x=>x.id!==c.id);
+      save('burnoutConnections', connections);
+      drawConnections();
+    });
+    svg.appendChild(line);
+  });
+}
+
+/* ============ COMPLETION TRACKING + PEPSI QUOTES ============ */
+let completedItems = load('completedItems', {}); // {itemId: true}
+
+const PEPSI_QUOTES = [
+  'أنا فخور بيكي يا بطلة! كملي كده! 💪',
+  'ماشاء الله عليكي! إنتي أحسن إنسانة في الدنيا! 🌟',
+  'شايفك بتذاكري؟ طب خدي بوسة من بابسي 😽',
+  'يلا يا نجمة.. كل خطوة بتقربك من حلمك! ✨',
+  'بابسي بيقولك: إنتي قدها وقدود! 🐱',
+  'مفيش حاجة صعبة عليكي.. كملي! 🔥',
+  'أنا قاعد جنبك وفخور بيكي! ميااو 😸',
+  'كل ملخص بتخلصيه بيقربك خطوة! 📚',
+  'شاطرة أوي والله.. تستاهلي راحة بعدها 🧁',
+  'بابسي بيقولك: الشطارة مش بس في المذاكرة.. في إنك مبطلتيش! 💜',
+  'يا ألطف إنسانة.. إنتي كده بتكسري الدنيا! 🌈',
+  'خلاص فاضل حاجة بسيطة.. كملي يا حبيبتي! 🎯',
+  'بابسي مبسوط أوي إنك خلصتي ده! مياااو! 😻',
+  'إنتي مش لوحدك.. بابسي معاكي دايمًا! 🐾',
+  'ده إنجاز حقيقي! افتخري بنفسك! 🏆',
+  'أحلى حاجة إنك مش مستسلمة.. ده أهم من أي درجة! 💗',
+  'كفاية إنك فتحتي الموقع.. ده معناه إنك عايزة تنجحي! 🌸',
+  'ربنا يوفقك يا رب.. وبابسي بيدعيلك كمان! 🤲',
+  'مراجعة صغيرة كل يوم أحسن من مراجعة كبيرة قبل الامتحان! 📝',
+  'بابسي بيقولك: خدي بريك صغير وارجعي أقوى! ☕',
+  'إنتي قمر والله.. بابسي بيحبك أوي! 😻',
+  'يلا يا قمورة.. إنتي أحلى واحدة! 🌙',
+];
+
+const PEPSI_WELCOME = [
+  'أهلاً بيكي تاني! بابسي وحشتيه أوي! 😽',
+  'نورتي يا بطلة! يلا نذاكر مع بعض! 📖',
+  'بابسي قاعد مستنيكي! يلا نبدأ! 🐱',
+  'أحلى إنسانة رجعت تاني! ميااو! 😸',
+  'بابسي فخور إنك جيتي تذاكري! 🌟',
+  'يا هلا يا هلا! بابسي جاهز يشجعك! 💪',
+];
+
+function toggleComplete(itemId, section){
+  if(completedItems[itemId]){
+    delete completedItems[itemId];
+  } else {
+    completedItems[itemId] = true;
+    showPepsiQuote();
+  }
+  save('completedItems', completedItems);
+  syncStateToCloud('completedItems', completedItems);
+  if(section === 'music') renderSongs();
+  else if(SECTIONS.includes(section)) renderFileSection(section);
+}
+
+let pepsiTimer = null;
+function showPepsiQuote(isWelcome){
+  // Remove existing
+  const existing = document.querySelector('.pepsi-toast');
+  if(existing) existing.remove();
+  if(pepsiTimer) clearTimeout(pepsiTimer);
+
+  const quotes = isWelcome ? PEPSI_WELCOME : PEPSI_QUOTES;
+  const quote = quotes[Math.floor(Math.random()*quotes.length)];
+
+  const toast = document.createElement('div');
+  toast.className = 'pepsi-toast';
+  toast.innerHTML = `
+    <img class="pepsi-img" src="pepsi.jpg" alt="Pepsi the cat">
+    <div class="pepsi-bubble">
+      <span class="pepsi-name">🐱 بابسي بيقولك:</span>
+      <button class="pepsi-close" onclick="closePepsi()">✕</button>
+      ${quote}
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  pepsiTimer = setTimeout(()=>{
+    toast.classList.add('hiding');
+    setTimeout(()=>toast.remove(), 400);
+  }, 5500);
+}
+
+function closePepsi(){
+  const toast = document.querySelector('.pepsi-toast');
+  if(!toast) return;
+  if(pepsiTimer) clearTimeout(pepsiTimer);
+  toast.classList.add('hiding');
+  setTimeout(()=>toast.remove(), 400);
+}
+
+/* ============ init ============ */
+renderTodos();
+renderLegend();
+renderCalendar();
+renderBurnout();
+renderYtPlaylists();
+
+// Welcome quote from Pepsi on page load
+setTimeout(()=> showPepsiQuote(true), 800);
+</script>
+</body>
+</html>
